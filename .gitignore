@@ -6,7 +6,6 @@ cache/
 .env
 
 # Dependencies
-lib/
 node_modules/
 package-lock.json
 
