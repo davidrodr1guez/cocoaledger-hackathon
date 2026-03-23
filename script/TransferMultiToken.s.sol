@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {HackathonMultiToken} from "../src/HackathonMultiToken.sol";
 
 /// @title TransferMultiToken
-/// @notice Transfers ERC1155 tokens from the privacy ledger to the public chain.
+/// @notice Transfers ERC1155 tokens from the Privacy Node to the public chain.
 ///
 ///         IMPORTANT: Must be signed with REGISTERED_PRIVATE_KEY.
 ///

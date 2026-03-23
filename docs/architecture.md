@@ -2,7 +2,7 @@
 
 ## What Is Rayls?
 
-A **Privacy Node** (also called a privacy ledger) is a sovereign, gasless EVM blockchain where only authorized participants can see transactions and balances. A **Public Chain** is a standard blockchain where anyone can view activity. Rayls lets you issue and manage assets privately, then selectively bridge them to a public chain when you're ready to disclose.
+A **Privacy Node** is a sovereign, gasless EVM blockchain where only authorized participants can see transactions and balances. A **Public Chain** is a standard blockchain where anyone can view activity. Rayls lets you issue and manage assets privately, then selectively bridge them to a public chain when you're ready to disclose.
 
 ## The Five-Phase Flow
 
@@ -29,7 +29,7 @@ The Rayls bridge connects a **Privacy Node** (where your token lives) to a **Pub
 
 ```
 ┌───────────────────────┐                          ┌───────────────────────┐
-│    PRIVACY LEDGER     │                          │     PUBLIC CHAIN      │
+│     PRIVACY NODE      │                          │     PUBLIC CHAIN      │
 │                       │                          │                       │
 │  Your Token           │    ┌──────────────┐      │  Mirror Token         │
 │  (RaylsErc20Handler)  │◄──►│   RELAYER    │◄────►│  (PublicChainERC20)   │
@@ -46,14 +46,14 @@ The Rayls bridge connects a **Privacy Node** (where your token lives) to a **Pub
 
 When you call `teleportToPublicChain()`:
 
-1. Tokens are **locked** on the privacy ledger (transferred to the contract owner)
+1. Tokens are **locked** on the Privacy Node (transferred to the contract owner)
 2. A cross-chain message is dispatched (via `RNEndpointV1`)
 3. The relayer picks up the `MessageDispatched` event
 4. The relayer submits the message to the public chain
 5. The mirror contract **mints** new tokens for the recipient
 
 ```
-Privacy Ledger                    Relayer                    Public Chain
+Privacy Node                      Relayer                    Public Chain
      │                              │                            │
      │  teleportToPublicChain()     │                            │
      │  ── lock tokens ──►          │                            │
@@ -69,7 +69,7 @@ Privacy Ledger                    Relayer                    Public Chain
 When someone calls `teleportToPrivacyNode()` on the public chain mirror:
 
 1. Tokens are **burned** on the public chain
-2. Message dispatched → relayer picks up → submits to privacy ledger
+2. Message dispatched → relayer picks up → submits to Privacy Node
 3. Previously locked tokens are **unlocked** and transferred to the recipient
 
 ### Failure Safety
@@ -89,7 +89,7 @@ Every cross-chain message includes a pre-generated **revert payload**. If the de
 ```
 
 1. **Write**: Inherit from `RaylsErc20Handler`
-2. **Deploy**: Deploy to the privacy ledger with Foundry
+2. **Deploy**: Deploy to the Privacy Node with Foundry
 3. **Register**: Call the backend API to add your token to `RNTokenGovernanceV1` (status: INACTIVE)
 4. **Approve**: Call the backend API to activate it (status: ACTIVE, emits `TokenActivated`)
 5. **Mirror Deployed**: The relayer detects `TokenActivated`, deploys a `PublicChainERC20` on the public chain, and maps the addresses
@@ -120,7 +120,7 @@ By using the internal `_mint()`, we skip the cross-chain notification and just u
 | Contract | Purpose |
 |---|---|
 | `RaylsErc20Handler` | Base class for your token. Provides teleport, mint, burn, lock/unlock. |
-| `RNEndpointV1` | Message gateway on the privacy ledger. Routes cross-chain messages. |
+| `RNEndpointV1` | Message gateway on the Privacy Node. Routes cross-chain messages. |
 | `RNUserGovernanceV1` | User registry. Controls who can call `teleportToPublicChain`. |
 | `RNTokenGovernanceV1` | Token registry. Maps private token addresses to public mirrors. |
 | `PublicChainERC20` | Auto-deployed mirror on the public chain. Burn/mint model. |

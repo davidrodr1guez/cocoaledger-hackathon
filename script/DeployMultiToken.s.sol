@@ -6,7 +6,7 @@ import {HackathonMultiToken} from "../src/HackathonMultiToken.sol";
 import {IDeploymentProxyRegistryV1} from "rayls-protocol-sdk/interfaces/IDeploymentProxyRegistryV1.sol";
 
 /// @title DeployMultiToken
-/// @notice Deploys HackathonMultiToken (ERC1155) to the privacy ledger.
+/// @notice Deploys HackathonMultiToken (ERC1155) to the Privacy Node.
 ///
 /// Usage:
 ///   source .env

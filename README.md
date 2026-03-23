@@ -1,6 +1,6 @@
 # Rayls Hackathon Starter
 
-Deploy a bridgeable ERC20 token on the Rayls privacy ledger and transfer it to a public chain.
+Deploy a bridgeable ERC20 token on your Rayls Privacy Node and transfer it to a public chain.
 
 ## What You'll Build
 
@@ -191,14 +191,14 @@ This calls `mint()` (onlyOwner) on your token, sending tokens to `MINT_RECIPIENT
 
 ### Step 9: Transfer to Public Chain
 
-Bridge tokens from the privacy ledger to the public chain.
+Bridge tokens from the Privacy Node to the public chain.
 
 ```bash
 forge script script/Transfer.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
 ```
 
 This calls `teleportToPublicChain()` which:
-1. **Locks** tokens on the privacy ledger
+1. **Locks** tokens on the Privacy Node
 2. Dispatches a cross-chain message
 3. The relayer picks it up and submits to the public chain
 4. The mirror contract **mints** tokens for you on the public chain
@@ -309,7 +309,7 @@ The mirror address is shown in the `CheckBalance.s.sol` output, or query it via 
 | `Token not found` or reverts on transfer | Token not registered/activated | Complete Steps 5-6 and wait for mirror deployment |
 | `Ownable: caller is not the owner` | Wrong key used for mint | Use `DEPLOYER_PRIVATE_KEY` for Mint.s.sol |
 | Transfer succeeds but no tokens on public chain | Relayer hasn't processed yet | Wait ~60 seconds, then check again |
-| `Failed to get EIP-1559 fees` | Rayls privacy ledgers are gasless and don't support EIP-1559 | Add `--legacy` flag to your `forge script` command (already included in all commands above) |
+| `Failed to get EIP-1559 fees` | Rayls Privacy Nodes are gasless and don't support EIP-1559 | Add `--legacy` flag to your `forge script` command (already included in all commands above) |
 | Token approval returns HTTP 500 | Backend needs a moment after token registration | Retry the same curl command after 5 seconds |
 | Mirror address returns `0x0000...0000` | Relayer hasn't deployed the mirror yet | Wait 30-60 seconds after token approval |
 

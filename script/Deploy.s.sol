@@ -6,7 +6,7 @@ import {HackathonToken} from "../src/HackathonToken.sol";
 import {IDeploymentProxyRegistryV1} from "rayls-protocol-sdk/interfaces/IDeploymentProxyRegistryV1.sol";
 
 /// @title Deploy
-/// @notice Deploys HackathonToken to the privacy ledger.
+/// @notice Deploys HackathonToken to the Privacy Node.
 ///         Infrastructure addresses are discovered from the on-chain DeploymentProxyRegistry.
 ///
 /// Usage:

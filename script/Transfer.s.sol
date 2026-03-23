@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {HackathonToken} from "../src/HackathonToken.sol";
 
 /// @title Transfer
-/// @notice Transfers tokens from the privacy ledger to the public chain via teleportToPublicChain().
+/// @notice Transfers tokens from the Privacy Node to the public chain via teleportToPublicChain().
 ///
 ///         IMPORTANT: This script must be signed with REGISTERED_PRIVATE_KEY — the private key
 ///         of your registered private-chain address (from the onboarding response).
@@ -43,7 +43,7 @@ contract Transfer is Script {
         console.log("  To:          ", to);
         console.log("  Chain ID:    ", publicChainId);
         console.log("");
-        console.log("Tokens are locked on the privacy ledger.");
+        console.log("Tokens are locked on the Privacy Node.");
         console.log("The relayer will mint them on the public chain shortly.");
     }
 }

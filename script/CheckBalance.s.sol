@@ -12,7 +12,7 @@ interface IRNTokenGovernanceReader {
 
 /// @title CheckBalance
 /// @notice Checks your token balance on the public chain.
-///         First queries the privacy ledger for the mirror contract address,
+///         First queries the Privacy Node for the mirror contract address,
 ///         then switches to the public chain to read the balance.
 ///
 /// Usage:
@@ -25,7 +25,7 @@ contract CheckBalance is Script {
         address checkAddress = vm.envAddress("TRANSFER_TO");
         string memory publicRpc = vm.envString("PUBLIC_CHAIN_RPC_URL");
 
-        // Step 1: Query privacy ledger for the mirror contract address
+        // Step 1: Query Privacy Node for the mirror contract address
         IDeploymentProxyRegistryV1 registry = IDeploymentProxyRegistryV1(registryAddr);
         address tokenGovAddr = registry.getContract("RNTokenGovernance");
 

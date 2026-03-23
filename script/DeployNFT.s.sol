@@ -6,7 +6,7 @@ import {HackathonNFT} from "../src/HackathonNFT.sol";
 import {IDeploymentProxyRegistryV1} from "rayls-protocol-sdk/interfaces/IDeploymentProxyRegistryV1.sol";
 
 /// @title DeployNFT
-/// @notice Deploys HackathonNFT to the privacy ledger.
+/// @notice Deploys HackathonNFT to the Privacy Node.
 ///         Infrastructure addresses are discovered from the on-chain DeploymentProxyRegistry.
 ///
 /// Usage:
