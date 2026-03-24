@@ -257,6 +257,24 @@ Build an AI agent that runs an entire institutional treasury: detecting assets, 
 - **AI Role:** Full autonomous orchestration
 - **Key contracts:** Your token + the full five-phase pipeline scripted end-to-end
 
+## AI Agent Skeleton
+
+The `agent/` directory contains a minimal TypeScript example showing how to connect an AI to on-chain interactions. It demonstrates one pattern in three steps:
+
+1. **Read** — connects to the public chain via ethers.js and reads a bridged token's name, symbol, and supply
+2. **Analyze** — sends the token data to an LLM and gets back a structured verdict (approved/rejected, score, reasoning)
+3. **Write** — posts the AI's verdict as an on-chain attestation by calling `Attestation.sol`
+
+```bash
+cd agent && npm install && cp .env.example .env
+# Fill in your values, then:
+npm start
+```
+
+Supports **Google Gemini** (free tier — no credit card), **Anthropic** (Claude), and **OpenAI**. Set `AI_PROVIDER` in `agent/.env`.
+
+This is one pattern — adapt the read/analyze/write steps to your challenge track. The repo also includes `Attestation.sol` and `DeployPublic.s.sol` as optional building blocks.
+
 ## Customizing Your Token
 
 Edit `src/HackathonToken.sol` — there are commented-out examples for:
