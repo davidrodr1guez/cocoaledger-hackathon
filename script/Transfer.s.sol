@@ -20,7 +20,7 @@ import {HackathonToken} from "../src/HackathonToken.sol";
 ///
 /// Usage:
 ///   source .env
-///   forge script script/Transfer.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+///   forge script script/Transfer.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 contract Transfer is Script {
     function run() external {
         uint256 registeredKey = vm.envUint("REGISTERED_PRIVATE_KEY");

@@ -17,7 +17,7 @@ interface IRNTokenGovernanceReader {
 ///
 /// Usage:
 ///   source .env
-///   forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL
+///   forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_NODE_RPC_URL
 contract CheckBalance is Script {
     function run() external {
         address tokenAddr = vm.envAddress("TOKEN_ADDRESS");

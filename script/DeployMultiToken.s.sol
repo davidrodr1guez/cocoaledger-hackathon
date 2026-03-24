@@ -10,7 +10,7 @@ import {IDeploymentProxyRegistryV1} from "rayls-protocol-sdk/interfaces/IDeploym
 ///
 /// Usage:
 ///   source .env
-///   forge script script/DeployMultiToken.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+///   forge script script/DeployMultiToken.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 contract DeployMultiToken is Script {
     function run() external {
         address registryAddr = vm.envAddress("DEPLOYMENT_PROXY_REGISTRY");

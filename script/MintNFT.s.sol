@@ -9,7 +9,7 @@ import {HackathonNFT} from "../src/HackathonNFT.sol";
 ///
 /// Usage:
 ///   source .env
-///   forge script script/MintNFT.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+///   forge script script/MintNFT.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 contract MintNFT is Script {
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");

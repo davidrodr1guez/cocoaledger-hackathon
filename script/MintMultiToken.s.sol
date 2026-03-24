@@ -9,7 +9,7 @@ import {HackathonMultiToken} from "../src/HackathonMultiToken.sol";
 ///
 /// Usage:
 ///   source .env
-///   forge script script/MintMultiToken.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+///   forge script script/MintMultiToken.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 contract MintMultiToken is Script {
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");

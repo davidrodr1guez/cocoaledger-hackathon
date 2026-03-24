@@ -38,7 +38,7 @@ cp .env.example .env
 Edit `.env` with the values provided by hackathon organizers:
 
 ```
-PRIVACY_LEDGER_RPC_URL=<provided>
+PRIVACY_NODE_RPC_URL=<provided>
 DEPLOYMENT_PROXY_REGISTRY=<provided>
 PUBLIC_CHAIN_RPC_URL=<provided>
 PUBLIC_CHAIN_ID=<provided>
@@ -123,7 +123,7 @@ source .env
 ### Step 4: Deploy Your Token
 
 ```bash
-forge script script/Deploy.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+forge script script/Deploy.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 ```
 
 The script discovers infrastructure addresses from the on-chain registry and deploys your token. Copy the deployed address and set it in your `.env`:
@@ -176,7 +176,7 @@ After approval, the relayer automatically:
 **This takes ~30-60 seconds.** You can verify by running CheckBalance — if it prints a mirror address instead of reverting, the mirror is deployed:
 
 ```bash
-forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL
+forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_NODE_RPC_URL
 ```
 
 ### Step 8: Mint Tokens
@@ -184,7 +184,7 @@ forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL
 Mint tokens to your registered private-chain address (the one from Step 1).
 
 ```bash
-forge script script/Mint.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+forge script script/Mint.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 ```
 
 This calls `mint()` (onlyOwner) on your token, sending tokens to `MINT_RECIPIENT`.
@@ -194,7 +194,7 @@ This calls `mint()` (onlyOwner) on your token, sending tokens to `MINT_RECIPIENT
 Bridge tokens from the Privacy Node to the public chain.
 
 ```bash
-forge script script/Transfer.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL --broadcast --legacy
+forge script script/Transfer.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 ```
 
 This calls `teleportToPublicChain()` which:
@@ -210,7 +210,7 @@ This calls `teleportToPublicChain()` which:
 Check your balance on the public chain mirror contract. Your tokens should appear within a minute after the transfer.
 
 ```bash
-forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_LEDGER_RPC_URL
+forge script script/CheckBalance.s.sol --rpc-url $PRIVACY_NODE_RPC_URL
 ```
 
 This script automatically discovers the mirror contract address from the on-chain governance registry, then queries the public chain for your balance.
@@ -335,25 +335,25 @@ The mirror address is shown in the `CheckBalance.s.sol` output, or query it via 
 
 Inspect a failed transaction:
 ```bash
-cast run <TX_HASH> --rpc-url $PRIVACY_LEDGER_RPC_URL
+cast run <TX_HASH> --rpc-url $PRIVACY_NODE_RPC_URL
 ```
 
 Check if the mirror contract is deployed:
 ```bash
 # Get the TokenGovernance address
-TOKEN_GOV=$(cast call $DEPLOYMENT_PROXY_REGISTRY "getContract(string)(address)" "RNTokenGovernance" --rpc-url $PRIVACY_LEDGER_RPC_URL)
+TOKEN_GOV=$(cast call $DEPLOYMENT_PROXY_REGISTRY "getContract(string)(address)" "RNTokenGovernance" --rpc-url $PRIVACY_NODE_RPC_URL)
 
 # Query the public mirror address
-cast call $TOKEN_GOV "getPublicAddressByPrivateAddress(address)(address)" $TOKEN_ADDRESS --rpc-url $PRIVACY_LEDGER_RPC_URL
+cast call $TOKEN_GOV "getPublicAddressByPrivateAddress(address)(address)" $TOKEN_ADDRESS --rpc-url $PRIVACY_NODE_RPC_URL
 ```
 
 Check your balances:
 ```bash
 # Balance on Privacy Node
-cast call $TOKEN_ADDRESS "balanceOf(address)(uint256)" <YOUR_ADDRESS> --rpc-url $PRIVACY_LEDGER_RPC_URL
+cast call $TOKEN_ADDRESS "balanceOf(address)(uint256)" <YOUR_ADDRESS> --rpc-url $PRIVACY_NODE_RPC_URL
 
 # Locked amount (tokens currently bridged to public)
-cast call $TOKEN_ADDRESS "getLockedAmount(address)(uint256)" <YOUR_ADDRESS> --rpc-url $PRIVACY_LEDGER_RPC_URL
+cast call $TOKEN_ADDRESS "getLockedAmount(address)(uint256)" <YOUR_ADDRESS> --rpc-url $PRIVACY_NODE_RPC_URL
 ```
 
 ## Further Reading

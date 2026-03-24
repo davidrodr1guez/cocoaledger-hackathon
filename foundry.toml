@@ -8,4 +8,4 @@ optimizer_runs = 50
 evm_version = "paris"
 
 [rpc_endpoints]
-privacy_ledger = "${PRIVACY_LEDGER_RPC_URL}"
+privacy_ledger = "${PRIVACY_NODE_RPC_URL}"
