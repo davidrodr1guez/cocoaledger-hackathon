@@ -122,7 +122,7 @@ source .env
 
 ### Step 4: Deploy Your Token
 
-> **Important:** Make sure `TOKEN_NAME` and `TOKEN_SYMBOL` in your `.env` are unique. If a token with the same name or symbol was already deployed on the network, the transaction will revert. Use a distinctive name for your team (e.g. `"Acme Bond"` / `"ACMB"`).
+> **Before deploying:** Make sure `DEPLOYER_PRIVATE_KEY` is set in your `.env`. Generate one with `cast wallet new` and copy the private key. Also make sure `TOKEN_NAME` and `TOKEN_SYMBOL` are unique — if a token with the same symbol was already deployed, the transaction will revert.
 
 ```bash
 forge script script/Deploy.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
@@ -437,6 +437,7 @@ The mirror address is shown in the `CheckBalance.s.sol` output, or query it via 
 | `Failed to get EIP-1559 fees` | Rayls Privacy Nodes are gasless and don't support EIP-1559 | Add `--legacy` flag to your `forge script` command (already included in all commands above) |
 | Token approval returns HTTP 500 | Backend needs a moment after token registration | Retry the same curl command after 5 seconds |
 | Mirror address returns `0x0000...0000` | Relayer hasn't deployed the mirror yet | Wait 30-60 seconds after token approval |
+| `failed parsing $DEPLOYER_PRIVATE_KEY` | `DEPLOYER_PRIVATE_KEY` is empty or still `0x` | Generate a key with `cast wallet new` and set it in `.env` |
 | Token register says "not a valid deployed contract" | `TOKEN_ADDRESS` not updated in `.env` after deploy | Set `TOKEN_ADDRESS=<address from Step 4 output>` and run `source .env` |
 | Redeploy reverts with "execution reverted" | Token with the same symbol already registered | Change `TOKEN_SYMBOL` in `.env` to a unique value and redeploy |
 
