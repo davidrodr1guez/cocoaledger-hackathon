@@ -122,6 +122,8 @@ source .env
 
 ### Step 4: Deploy Your Token
 
+> **Important:** Make sure `TOKEN_NAME` and `TOKEN_SYMBOL` in your `.env` are unique. If a token with the same name or symbol was already deployed on the network, the transaction will revert. Use a distinctive name for your team (e.g. `"Acme Bond"` / `"ACMB"`).
+
 ```bash
 forge script script/Deploy.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
 ```
@@ -271,7 +273,23 @@ cd agent && npm install && cp .env.example .env
 npm start
 ```
 
-Supports **Google Gemini** (free tier — no credit card), **Anthropic** (Claude), and **OpenAI**. Set `AI_PROVIDER` in `agent/.env`.
+Supports **Google Gemini** (free tier — no credit card), **Anthropic** (Claude), **OpenAI**, and **OpenRouter**. Set `AI_PROVIDER` in `agent/.env`.
+
+**OpenRouter** gives access to 300+ models through a single API key — including several **free models** ideal for hackathons:
+
+| Model | `OPENROUTER_MODEL` value |
+|-------|--------------------------|
+| Meta Llama 3.3 70B (free) | `meta-llama/llama-3.3-70b-instruct:free` |
+| DeepSeek R1 (free) | `deepseek/deepseek-r1:free` |
+| Mistral 7B (free) | `mistralai/mistral-7b-instruct:free` |
+| Gemma 3 27B (free) | `google/gemma-3-27b-it:free` |
+
+Get your free API key at [openrouter.ai/keys](https://openrouter.ai/keys), then set in `agent/.env`:
+```
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
+```
 
 This is one pattern — adapt the read/analyze/write steps to your challenge track. The repo also includes `Attestation.sol` and `DeployPublic.s.sol` as optional building blocks.
 
