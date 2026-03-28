@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CocoaLedger — Cacao Marketplace</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1a0f00 0%, #2d1800 50%, #1a0f00 100%);
+      border-bottom: 1px solid #3d2800;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #d4a052;
+    }
+    .logo span { color: #8b6914; }
+    .subtitle {
+      color: #8b8b8b;
+      font-size: 14px;
+    }
+    .badge {
+      background: #1a2e1a;
+      color: #4ade80;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #2d4a2d;
+    }
+
+    /* Main */
+    .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 30px;
+      background: #141414;
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+    }
+    .tab {
+      padding: 10px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: #2d1800;
+      color: #d4a052;
+    }
+    .tab:hover { color: #d4a052; }
+
+    /* Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #3d2800; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #d4a052;
+    }
+    .card-id {
+      color: #666;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-private { background: #1a1a2e; color: #818cf8; border: 1px solid #2d2d5e; }
+    .status-attested { background: #1a2e1a; color: #4ade80; border: 1px solid #2d4a2d; }
+    .status-bridged { background: #2e2a1a; color: #fbbf24; border: 1px solid #4a3d1a; }
+    .status-listed { background: #1a2e2e; color: #22d3ee; border: 1px solid #1a4a4a; }
+    .status-revealed { background: #2e1a2e; color: #e879f9; border: 1px solid #4a1a4a; }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #1e1e1e;
+      font-size: 14px;
+    }
+    .info-label { color: #666; }
+    .info-value { color: #ccc; font-weight: 500; }
+    .info-private { color: #818cf8; font-style: italic; }
+
+    .score-bar {
+      width: 100%;
+      height: 6px;
+      background: #1e1e1e;
+      border-radius: 3px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .score-high { background: linear-gradient(90deg, #4ade80, #22c55e); }
+    .score-medium { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .score-low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .score-text {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 16px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #d4a052, #8b6914);
+      color: #000;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-reveal {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      color: #fff;
+    }
+    .btn-reveal:hover { opacity: 0.9; }
+    .btn-disabled {
+      background: #2a2a2a;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    /* Register Form */
+    .form-section {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .form-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #d4a052;
+      margin-bottom: 20px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, select {
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #d4a052;
+    }
+
+    /* Flavor sliders */
+    .flavor-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .flavor-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .flavor-item label { font-size: 11px; }
+    .flavor-item input[type="range"] {
+      width: 100%;
+      padding: 0;
+    }
+    .flavor-value { font-size: 14px; font-weight: 600; color: #d4a052; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #141414;
+      border: 1px solid #3d2800;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #4ade80;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Logs */
+    .logs {
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    .log-entry { padding: 2px 0; }
+    .log-success { color: #4ade80; }
+    .log-info { color: #818cf8; }
+    .log-warn { color: #fbbf24; }
+    .log-error { color: #ef4444; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #555;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Cocoa<span>Ledger</span></div>
+    <div class="subtitle">Cacao Farm IoT Traceability — Powered by Rayls</div>
+  </div>
+  <div class="badge">Confidential NFT Reveal</div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('marketplace')">Marketplace</div>
+    <div class="tab" onclick="showTab('register')">Register Lot</div>
+    <div class="tab" onclick="showTab('pipeline')">Agent Pipeline</div>
+  </div>
+
+  <!-- MARKETPLACE TAB -->
+  <div id="tab-marketplace">
+    <div class="grid" id="listings-grid">
+      <div class="empty">
+        <div class="empty-icon">🌱</div>
+        <p>No cacao lots listed yet. Register a lot to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER TAB -->
+  <div id="tab-register" style="display:none;">
+    <div class="form-section">
+      <div class="form-title">Register New Cacao Lot</div>
+      <form id="lot-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Variety</label>
+            <select name="variety">
+              <option value="Criollo Fino de Aroma">Criollo Fino de Aroma</option>
+              <option value="Trinitario">Trinitario</option>
+              <option value="Nacional">Nacional</option>
+              <option value="Forastero">Forastero</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input name="weight" type="text" placeholder="500 kg" value="500 kg" />
+          </div>
+          <div class="form-group">
+            <label>Region</label>
+            <input name="region" type="text" placeholder="Tumaco, Nariño" value="Tumaco, Nariño" />
+          </div>
+          <div class="form-group">
+            <label>Altitude</label>
+            <input name="altitude" type="text" placeholder="450 msnm" value="450 msnm" />
+          </div>
+          <div class="form-group">
+            <label>Harvest</label>
+            <input name="harvest" type="text" placeholder="2026-Q1" value="2026-Q1" />
+          </div>
+          <div class="form-group">
+            <label>Cooperative</label>
+            <input name="cooperativeName" type="text" placeholder="CoopCacao Tumaco" value="CoopCacao Tumaco" />
+          </div>
+          <div class="form-group">
+            <label>Fermentation (days)</label>
+            <input name="fermentationDays" type="number" value="6" min="1" max="14" />
+          </div>
+          <div class="form-group">
+            <label>Drying Method</label>
+            <select name="dryingMethod">
+              <option value="Solar, 5 days">Solar, 5 days</option>
+              <option value="Solar, 7 days">Solar, 7 days</option>
+              <option value="Mechanical, 1 day">Mechanical, 1 day</option>
+              <option value="Hybrid, 3 days">Hybrid, 3 days</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Humidity (%)</label>
+            <input name="humidity" type="text" placeholder="7.2%" value="7.2%" />
+          </div>
+          <div class="form-group">
+            <label>Farmer Experience (years)</label>
+            <input name="farmerExperienceYears" type="number" value="8" min="1" />
+          </div>
+          <div class="form-group full">
+            <label>Flavor Profile</label>
+            <div class="flavor-grid">
+              <div class="flavor-item">
+                <label>Acidity</label>
+                <input type="range" name="fp_acidity" min="0" max="10" step="0.1" value="7.5" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="flavor-value">7.5</span>
+              </div>
+              <div class="flavor-item">
+                <label>Bitterness</label>
+                <input type="range" name="fp_bitterness" min="0" max="10" step="0.1" value="4.2" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="flavor-value">4.2</span>
+              </div>
+              <div class="flavor-item">
+                <label>Fruitiness</label>
+                <input type="range" name="fp_fruitiness" min="0" max="10" step="0.1" value="8.1" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="flavor-value">8.1</span>
+              </div>
+              <div class="flavor-item">
+                <label>Floral</label>
+                <input type="range" name="fp_floral" min="0" max="10" step="0.1" value="6.8" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="flavor-value">6.8</span>
+              </div>
+              <div class="flavor-item">
+                <label>Body</label>
+                <input type="range" name="fp_body" min="0" max="10" step="0.1" value="7.9" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="flavor-value">7.9</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Certifications</label>
+            <input name="certifications" type="text" placeholder="Organic, Rainforest Alliance" value="Organic, Rainforest Alliance" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Register Lot on Privacy Node</button>
+      </form>
+      <div class="logs" id="register-logs" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE TAB -->
+  <div id="tab-pipeline" style="display:none;">
+    <div class="form-section">
+      <div class="form-title">Agent Pipeline Status</div>
+      <p style="color:#888; margin-bottom:16px;">Watch the AI agent verify, attest, bridge, and list cacao lots in real-time.</p>
+      <div class="grid" id="pipeline-grid"></div>
+      <div class="logs" id="pipeline-logs">
+        <div class="log-entry log-info">Waiting for agent activity...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- REVEAL MODAL -->
+<div class="modal-overlay" id="reveal-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-title">Full Provenance Revealed</div>
+    <div id="reveal-content"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+function showTab(name) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${name}`).style.display = 'block';
+  event.target.classList.add('active');
+  if (name === 'marketplace') loadLots();
+}
+
+async function loadLots() {
+  const grid = document.getElementById('listings-grid');
+  try {
+    const res = await fetch(`${API}/api/lots`);
+    const lots = await res.json();
+
+    if (lots.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">🌱</div><p>No cacao lots yet. Register one to get started.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = lots.map(lot => {
+      const statusClass = `status-${lot.status}`;
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${lot.variety || 'Cacao Lot'}</div>
+              <div class="card-id">Token #${lot.tokenId}</div>
+            </div>
+            <span class="status-badge ${statusClass}">${lot.status}</span>
+          </div>
+          <div class="info-row"><span class="info-label">Weight</span><span class="info-value">${lot.weight}</span></div>
+          <div class="info-row"><span class="info-label">Harvest</span><span class="info-value">${lot.harvest}</span></div>
+          <div class="info-row"><span class="info-label">Region</span><span class="info-private">🔒 PRIVATE</span></div>
+          <div class="info-row"><span class="info-label">Cooperative</span><span class="info-private">🔒 PRIVATE</span></div>
+          <div class="info-row"><span class="info-label">Flavor Profile</span><span class="info-private">🔒 PRIVATE</span></div>
+          ${lot.status === 'revealed'
+            ? `<button class="btn btn-reveal" onclick="viewReveal(${lot.tokenId})">View Full Provenance</button>`
+            : lot.status === 'listed'
+            ? `<button class="btn btn-primary" onclick="buyAndReveal(${lot.tokenId})">Buy & Reveal</button>`
+            : `<button class="btn btn-disabled" disabled>Awaiting AI Verification</button>`
+          }
+        </div>`;
+    }).join('');
+  } catch (e) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error loading lots: ${e.message}</p></div>`;
+  }
+}
+
+async function buyAndReveal(tokenId) {
+  try {
+    const res = await fetch(`${API}/api/lot/${tokenId}/reveal`, { method: 'POST' });
+    const data = await res.json();
+    showRevealModal(data.fullMetadata);
+    loadLots();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function viewReveal(tokenId) {
+  try {
+    const res = await fetch(`${API}/api/lot/${tokenId}`);
+    const data = await res.json();
+    showRevealModal(data);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function showRevealModal(data) {
+  const content = document.getElementById('reveal-content');
+  content.innerHTML = `
+    <div class="info-row"><span class="info-label">Variety</span><span class="info-value">${data.variety || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Region</span><span class="info-value" style="color:#4ade80">${data.region || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Altitude</span><span class="info-value" style="color:#4ade80">${data.altitude || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Cooperative</span><span class="info-value" style="color:#4ade80">${data.cooperativeName || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Farmer Experience</span><span class="info-value" style="color:#4ade80">${data.farmerExperienceYears || 'N/A'} years</span></div>
+    <div class="info-row"><span class="info-label">Fermentation</span><span class="info-value" style="color:#4ade80">${data.fermentationDays || 'N/A'} days</span></div>
+    <div class="info-row"><span class="info-label">Drying</span><span class="info-value" style="color:#4ade80">${data.dryingMethod || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Humidity</span><span class="info-value" style="color:#4ade80">${data.humidity || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Certifications</span><span class="info-value" style="color:#4ade80">${Array.isArray(data.certifications) ? data.certifications.join(', ') : data.certifications || 'N/A'}</span></div>
+    ${data.flavorProfile ? `
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2a2a;">
+      <span class="info-label">Flavor Profile</span>
+      <div style="display:grid; grid-template-columns: repeat(5,1fr); gap:8px; margin-top:8px; text-align:center;">
+        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.acidity}</div><div style="color:#666; font-size:11px;">Acidity</div></div>
+        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.bitterness}</div><div style="color:#666; font-size:11px;">Bitter</div></div>
+        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.fruitiness}</div><div style="color:#666; font-size:11px;">Fruity</div></div>
+        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.floral}</div><div style="color:#666; font-size:11px;">Floral</div></div>
+        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.body}</div><div style="color:#666; font-size:11px;">Body</div></div>
+      </div>
+    </div>` : ''}
+    <div style="margin-top:20px; padding:12px; background:#1a2e1a; border-radius:8px; border:1px solid #2d4a2d;">
+      <span style="color:#4ade80; font-weight:600;">Provenance verified on Rayls Privacy Node</span><br>
+      <span style="color:#888; font-size:12px;">This data was private until purchase. Only you can see it.</span>
+    </div>
+  `;
+  document.getElementById('reveal-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('reveal-modal').classList.remove('show');
+}
+
+// Form submission
+document.getElementById('lot-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const logs = document.getElementById('register-logs');
+  logs.style.display = 'block';
+
+  const body = {
+    variety: form.get('variety'),
+    weight: form.get('weight'),
+    region: form.get('region'),
+    altitude: form.get('altitude'),
+    harvest: form.get('harvest'),
+    cooperativeName: form.get('cooperativeName'),
+    fermentationDays: parseInt(form.get('fermentationDays')),
+    dryingMethod: form.get('dryingMethod'),
+    humidity: form.get('humidity'),
+    farmerExperienceYears: parseInt(form.get('farmerExperienceYears')),
+    certifications: form.get('certifications').split(',').map(s => s.trim()),
+    flavorProfile: {
+      acidity: parseFloat(form.get('fp_acidity')),
+      bitterness: parseFloat(form.get('fp_bitterness')),
+      fruitiness: parseFloat(form.get('fp_fruitiness')),
+      floral: parseFloat(form.get('fp_floral')),
+      body: parseFloat(form.get('fp_body')),
+    },
+  };
+
+  addLog(logs, 'info', 'Registering cacao lot on Privacy Node...');
+
+  try {
+    const res = await fetch(`${API}/api/lot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      addLog(logs, 'success', `Lot #${data.tokenId} minted on Privacy Node`);
+      addLog(logs, 'info', 'Metadata stored privately. Only AI agent can read it.');
+      addLog(logs, 'info', 'Waiting for AI verification...');
+    } else {
+      addLog(logs, 'error', `Error: ${data.error}`);
+    }
+  } catch (err) {
+    addLog(logs, 'error', `Error: ${err.message}`);
+  }
+});
+
+function addLog(container, type, msg) {
+  const entry = document.createElement('div');
+  entry.className = `log-entry log-${type}`;
+  const time = new Date().toLocaleTimeString();
+  entry.textContent = `[${time}] ${msg}`;
+  container.appendChild(entry);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Initial load
+loadLots();
+// Auto-refresh every 5s
+setInterval(loadLots, 5000);
+</script>
+
+</body>
+</html>

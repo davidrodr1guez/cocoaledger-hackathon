@@ -1,14 +1,6 @@
-# Compiler output
+.env
+node_modules/
 out/
 cache/
 broadcast/
-
-# Environment
-.env
-
-# Dependencies
-node_modules/
-package-lock.json
-
-# OS
-.DS_Store
+app/node_modules/
