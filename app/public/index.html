@@ -1377,10 +1377,17 @@ async function buyAndReveal(tokenId, btnElement) {
   updateBtn('Preparing NFT...');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
+  // Progress animation (takes ~30s)
+  const steps = ['Minting NFT on Privacy Node...', 'Bridging to Public Chain...', 'Waiting for relayer...', 'Listing on Marketplace...'];
+  let stepIdx = 0;
+  const progressInterval = setInterval(() => {
+    if (stepIdx < steps.length) { updateBtn(steps[stepIdx]); stepIdx++; }
+  }, 7000);
+
   try {
     // Step 1: Server mints NFT, bridges, lists on marketplace
     console.log('[purchase] Step 1: Preparing lot', tokenId);
-    updateBtn('Minting NFT...');
+    updateBtn('Minting NFT on Privacy Node...');
 
     const prepRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/prepare`, {
       method: 'POST',
@@ -1389,6 +1396,8 @@ async function buyAndReveal(tokenId, btnElement) {
     });
     const prepData = await prepRes.json();
     console.log('[purchase] Prepared:', prepData);
+
+    clearInterval(progressInterval);
 
     if (!prepData.success) {
       alert('Preparation failed: ' + (prepData.error || 'Unknown'));
@@ -1454,6 +1463,7 @@ async function buyAndReveal(tokenId, btnElement) {
     }
 
   } catch (e) {
+    clearInterval(progressInterval);
     console.error('[purchase] Error:', e);
     if (e.code === 4001 || e.code === 'ACTION_REJECTED') {
       alert('Transaction rejected by user.');

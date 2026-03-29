@@ -359,12 +359,6 @@ app.post('/api/cacao-market/lot/:tokenId/prepare', async (req, res) => {
     return res.status(404).json({ error: 'Lot not found' });
   }
 
-  // Prevent double-click
-  if (lot._preparing) {
-    return res.status(409).json({ error: 'Already preparing this lot. Please wait.' });
-  }
-  lot._preparing = true;
-
   let nftTokenId = Date.now() % 100000;
   let mintTxHash = null;
   let bridgeTxHash = null;
@@ -447,8 +441,6 @@ app.post('/api/cacao-market/lot/:tokenId/prepare', async (req, res) => {
   } catch (e) {
     console.error('Prepare error:', e.message);
     res.status(500).json({ error: e.message });
-  } finally {
-    if (lot) lot._preparing = false;
   }
 });
 
