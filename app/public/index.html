@@ -1133,12 +1133,12 @@ const API = '';
 
 /* ===== IMAGE MAP ===== */
 const LOT_IMAGES = {
-  1: 'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?w=400&h=200&fit=crop',
-  2: 'https://images.unsplash.com/photo-1571939228382-b2f2b585ce15?w=400&h=200&fit=crop',
-  3: 'https://images.unsplash.com/photo-1599599810694-e5b4388ed8e1?w=400&h=200&fit=crop',
-  4: 'https://images.unsplash.com/photo-1526081347589-7fa3cb41b4b2?w=400&h=200&fit=crop',
+  1: '/img/1.jpg',
+  2: '/img/2.jpg',
+  3: '/img/3.jpg',
+  4: '/img/4.jpg',
 };
-const DEFAULT_IMG = 'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?w=400&h=200&fit=crop';
+const DEFAULT_IMG = '/img/1.jpg';
 
 /* ===== TABS ===== */
 document.getElementById('tab-nav').addEventListener('click', (e) => {
@@ -1269,13 +1269,27 @@ function renderCard(lot) {
 
 /* ===== PURCHASE / REVEAL ===== */
 async function buyAndReveal(tokenId) {
+  const btn = event.target;
+  btn.textContent = 'Minting NFT...';
+  btn.disabled = true;
   try {
-    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/reveal`, { method: 'POST' });
+    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/purchase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ buyerAddress: '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d' }),
+    });
     const data = await res.json();
-    showRevealModal(data.fullMetadata || data);
+    if (data.success) {
+      showRevealModal(data.fullMetadata || data, data);
+    } else {
+      alert('Purchase failed: ' + (data.error || 'Unknown error'));
+    }
     loadLots();
   } catch (e) {
     alert('Error: ' + e.message);
+  } finally {
+    btn.textContent = 'Purchase Harvest Lot';
+    btn.disabled = false;
   }
 }
 
@@ -1289,10 +1303,21 @@ async function viewReveal(tokenId) {
   }
 }
 
-function showRevealModal(data) {
+function showRevealModal(data, purchaseInfo) {
   const content = document.getElementById('reveal-content');
   const title = document.getElementById('modal-title');
   title.textContent = `${data.variety || 'Cacao Lot'} — Full Data`;
+
+  // Add NFT info at top if from purchase
+  const nftBanner = purchaseInfo && purchaseInfo.nftTokenId ? `
+    <div style="margin-bottom:16px; padding:14px; background:linear-gradient(135deg,#1a2e1a,#0a1a0a); border-radius:10px; border:1px solid #2d4a2d;">
+      <div style="font-weight:700; color:#4ade80; font-size:15px; margin-bottom:8px;">NFT Minted Successfully</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
+        <span style="color:#888;">NFT Token ID</span><span style="color:#e0e0e0; font-family:monospace;">#${purchaseInfo.nftTokenId}</span>
+        ${purchaseInfo.mintTxHash ? `<span style="color:#888;">Mint Tx</span><a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.mintTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:monospace;">${purchaseInfo.mintTxHash.slice(0,10)}...${purchaseInfo.mintTxHash.slice(-8)}</a>` : ''}
+        ${purchaseInfo.bridgeTxHash ? `<span style="color:#888;">Bridge Tx</span><a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.bridgeTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:monospace;">${purchaseInfo.bridgeTxHash.slice(0,10)}...${purchaseInfo.bridgeTxHash.slice(-8)}</a>` : ''}
+      </div>
+    </div>` : '';
 
   const iotRows = data.iotReadings ? data.iotReadings.map(r =>
     `<tr><td>${r.time || '-'}</td><td>${r.temp || '-'}</td><td>${r.humidity || '-'}</td><td>${r.soil || '-'}</td><td>${r.rain || '-'}</td></tr>`
@@ -1301,6 +1326,7 @@ function showRevealModal(data) {
   const fp = data.flavorProfile;
 
   content.innerHTML = `
+    ${nftBanner || ''}
     <div class="reveal-banner">
       <span class="reveal-banner-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple-primary)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
