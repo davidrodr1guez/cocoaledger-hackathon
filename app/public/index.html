@@ -3,227 +3,582 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CocoaLedger — Cacao Marketplace</title>
+  <title>CocoaLedger — Verified Cacao Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
-      min-height: 100vh;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #0c0806;
+      --bg-base: #110e0a;
+      --bg-card: #1a1410;
+      --bg-elevated: #211a13;
+      --bg-input: #0e0b08;
+      --border-subtle: #2a2118;
+      --border-warm: #3d2e1e;
+      --border-gold: #6b4d2d;
+      --gold-primary: #d4a24e;
+      --gold-light: #e8c373;
+      --gold-dim: #8b6c3a;
+      --gold-muted: #5a4325;
+      --text-primary: #f0e6d8;
+      --text-secondary: #a89880;
+      --text-muted: #6b5d4e;
+      --text-dim: #463c30;
+      --green-primary: #5cb87a;
+      --green-dim: #1d2e22;
+      --green-border: #2d4a34;
+      --cyan-primary: #4dc5d8;
+      --cyan-dim: #132a2e;
+      --cyan-border: #1a4a50;
+      --purple-primary: #b07ae8;
+      --purple-dim: #211530;
+      --purple-border: #362550;
+      --red-primary: #e06060;
+      --red-dim: #2e1515;
+      --amber-primary: #e0a840;
+      --amber-dim: #2e2510;
+      --blue-primary: #7090e8;
+      --blue-dim: #151a2e;
+      --blue-border: #252e50;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --shadow-card: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle);
+      --shadow-hover: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--border-warm);
+      --shadow-modal: 0 24px 80px rgba(0,0,0,0.7);
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Header */
+    html { height: 100%; }
+
+    body {
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== HEADER ===== */
     .header {
-      background: linear-gradient(135deg, #1a0f00 0%, #2d1800 50%, #1a0f00 100%);
-      border-bottom: 1px solid #3d2800;
-      padding: 10px 30px;
+      background: linear-gradient(180deg, #1a130c 0%, var(--bg-deep) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
+      position: relative;
     }
-    .logo {
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(212, 162, 78, 0.25);
+    }
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
       font-size: 22px;
-      font-weight: 700;
-      color: #d4a052;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1;
     }
-    .logo span { color: #8b6914; }
-    .subtitle {
-      color: #8b8b8b;
-      font-size: 11px;
+    .logo-text em {
+      font-style: italic;
+      color: var(--gold-primary);
     }
-    .badge {
-      background: #1a2e1a;
-      color: #4ade80;
-      padding: 4px 10px;
+    .header-tagline {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .chain-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      padding: 5px 12px;
       border-radius: 20px;
       font-size: 10px;
       font-weight: 600;
-      border: 1px solid #2d4a2d;
+      color: var(--green-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .chain-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green-primary);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(92, 184, 122, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(92, 184, 122, 0); }
+    }
+    .network-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      padding: 5px 10px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
     }
 
-    /* Main */
-    .container { max-width: 1400px; margin: 0 auto; padding: 12px 16px; }
+    /* ===== MAIN LAYOUT ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 12px 32px 16px;
+    }
 
-    /* Tabs */
+    /* ===== TABS ===== */
     .tabs {
       display: flex;
-      gap: 4px;
+      gap: 2px;
       margin-bottom: 12px;
-      background: #141414;
-      border-radius: 8px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
       padding: 3px;
       width: fit-content;
+      border: 1px solid var(--border-subtle);
     }
     .tab {
-      padding: 6px 18px;
-      border-radius: 6px;
+      padding: 7px 20px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
-      color: #888;
-      transition: all 0.2s;
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+      letter-spacing: 0.2px;
+      user-select: none;
+      position: relative;
     }
+    .tab:hover { color: var(--text-secondary); }
     .tab.active {
-      background: #2d1800;
-      color: #d4a052;
+      background: linear-gradient(135deg, rgba(212,162,78,0.15), rgba(212,162,78,0.05));
+      color: var(--gold-primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     }
-    .tab:hover { color: #d4a052; }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 2px;
+      background: var(--gold-primary);
+      border-radius: 1px;
+    }
 
-    /* Cards */
+    /* ===== TAB CONTENT ===== */
+    .tab-content { flex: 1; overflow: hidden; display: none; }
+    .tab-content.active { display: flex; flex-direction: column; }
+
+    /* ===== MARKETPLACE GRID ===== */
     .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      gap: 14px;
+      flex: 1;
     }
-    .card {
-      background: #141414;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      padding: 14px;
-      transition: border-color 0.2s;
-    }
-    .card:hover { border-color: #3d2800; }
 
-    .card-header {
+    /* ===== CARD ===== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all var(--transition-base);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card:hover {
+      border-color: var(--border-warm);
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+    }
+    .card-img-wrap {
+      position: relative;
+      height: 110px;
+      overflow: hidden;
+    }
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    .card:hover .card-img { transform: scale(1.05); }
+    .card-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, var(--bg-card) 0%, transparent 60%);
+    }
+    .card-status {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+    }
+
+    .status-pill {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .status-private { background: rgba(112,144,232,0.15); color: var(--blue-primary); border: 1px solid rgba(112,144,232,0.25); }
+    .status-attested { background: rgba(92,184,122,0.15); color: var(--green-primary); border: 1px solid rgba(92,184,122,0.25); }
+    .status-listed { background: rgba(77,197,216,0.15); color: var(--cyan-primary); border: 1px solid rgba(77,197,216,0.25); }
+    .status-rejected { background: rgba(224,96,96,0.15); color: var(--red-primary); border: 1px solid rgba(224,96,96,0.25); }
+    .status-revealed { background: rgba(176,122,232,0.15); color: var(--purple-primary); border: 1px solid rgba(176,122,232,0.25); }
+
+    .card-body {
+      padding: 10px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .card-top {
       display: flex;
       justify-content: space-between;
-      align-items: start;
+      align-items: flex-start;
       margin-bottom: 8px;
     }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #d4a052;
+    .card-variety {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--text-primary);
+      line-height: 1.2;
     }
-    .card-id {
-      color: #666;
-      font-size: 10px;
-      font-family: monospace;
-    }
-
-    .status-badge {
-      padding: 3px 8px;
-      border-radius: 10px;
+    .card-token {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 9px;
-      font-weight: 600;
-      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      background: rgba(255,255,255,0.03);
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-left: 8px;
     }
-    .status-private { background: #1a1a2e; color: #818cf8; border: 1px solid #2d2d5e; }
-    .status-attested { background: #1a2e1a; color: #4ade80; border: 1px solid #2d4a2d; }
-    .status-bridged { background: #2e2a1a; color: #fbbf24; border: 1px solid #4a3d1a; }
-    .status-listed { background: #1a2e2e; color: #22d3ee; border: 1px solid #1a4a4a; }
-    .status-revealed { background: #2e1a2e; color: #e879f9; border: 1px solid #4a1a4a; }
 
-    .info-row {
+    .card-meta {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .meta-chip {
+      font-size: 10px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .meta-chip svg { width: 11px; height: 11px; opacity: 0.5; }
+
+    .private-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px 8px;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background: rgba(255,255,255,0.015);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .pf-item {
       display: flex;
       justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px solid #1e1e1e;
-      font-size: 11px;
+      align-items: center;
+      font-size: 10px;
+      padding: 2px 0;
     }
-    .info-label { color: #666; }
-    .info-value { color: #ccc; font-weight: 500; }
-    .info-private { color: #818cf8; font-style: italic; }
+    .pf-label { color: var(--text-dim); }
+    .pf-lock {
+      color: var(--blue-primary);
+      font-size: 9px;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
 
-    .score-bar {
+    /* AI Score Section */
+    .ai-section {
+      margin-top: auto;
+      padding: 8px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .ai-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .ai-label {
+      font-size: 8.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .ai-score-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .grade-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .grade-A { background: rgba(92,184,122,0.15); color: var(--green-primary); border: 1px solid rgba(92,184,122,0.3); }
+    .grade-B { background: rgba(77,197,216,0.15); color: var(--cyan-primary); border: 1px solid rgba(77,197,216,0.3); }
+    .grade-C { background: rgba(224,168,64,0.15); color: var(--amber-primary); border: 1px solid rgba(224,168,64,0.3); }
+    .grade-D { background: rgba(224,96,96,0.15); color: var(--red-primary); border: 1px solid rgba(224,96,96,0.3); }
+
+    .score-track {
       width: 100%;
-      height: 6px;
-      background: #1e1e1e;
-      border-radius: 3px;
-      margin-top: 12px;
+      height: 4px;
+      background: var(--border-subtle);
+      border-radius: 2px;
       overflow: hidden;
+      margin: 5px 0;
     }
     .score-fill {
       height: 100%;
-      border-radius: 3px;
-      transition: width 0.5s ease;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .score-high { background: linear-gradient(90deg, #4ade80, #22c55e); }
-    .score-medium { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-    .score-low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .fill-A { background: linear-gradient(90deg, #3a8a54, var(--green-primary)); }
+    .fill-B { background: linear-gradient(90deg, #2a8a9a, var(--cyan-primary)); }
+    .fill-C { background: linear-gradient(90deg, #a07a20, var(--amber-primary)); }
+    .fill-D { background: linear-gradient(90deg, #a03030, var(--red-primary)); }
+    .fill-none { background: var(--text-dim); }
 
-    .score-text {
+    .ai-bottom {
       display: flex;
       justify-content: space-between;
-      margin-top: 6px;
-      font-size: 12px;
+      align-items: center;
+      font-size: 9px;
     }
+    .ai-origin {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .origin-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .origin-verified { background: var(--green-primary); }
+    .origin-unverified { background: var(--red-primary); }
+    .ai-premium { color: var(--amber-primary); }
 
     /* Buttons */
+    .card-action {
+      margin-top: 10px;
+    }
     .btn {
-      padding: 7px 14px;
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
-      width: 100%;
-      margin-top: 8px;
+      transition: all var(--transition-fast);
+      letter-spacing: 0.3px;
+      text-align: center;
     }
-    .btn-primary {
-      background: linear-gradient(135deg, #d4a052, #8b6914);
-      color: #000;
+    .btn-purchase {
+      background: linear-gradient(135deg, var(--gold-primary), #b8862e);
+      color: #1a0f00;
+      box-shadow: 0 2px 8px rgba(212, 162, 78, 0.2);
     }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-reveal {
-      background: linear-gradient(135deg, #818cf8, #6366f1);
+    .btn-purchase:hover {
+      box-shadow: 0 4px 16px rgba(212, 162, 78, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-view {
+      background: linear-gradient(135deg, var(--purple-primary), #8a50d0);
       color: #fff;
+      box-shadow: 0 2px 8px rgba(176, 122, 232, 0.15);
     }
-    .btn-reveal:hover { opacity: 0.9; }
+    .btn-view:hover {
+      box-shadow: 0 4px 16px rgba(176, 122, 232, 0.3);
+      transform: translateY(-1px);
+    }
     .btn-disabled {
-      background: #2a2a2a;
-      color: #666;
+      background: var(--bg-elevated);
+      color: var(--text-dim);
       cursor: not-allowed;
+      border: 1px solid var(--border-subtle);
+    }
+    .btn-rejected {
+      background: var(--red-dim);
+      color: var(--red-primary);
+      cursor: not-allowed;
+      border: 1px solid rgba(224,96,96,0.2);
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, var(--gold-primary), #b8862e);
+      color: #1a0f00;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      margin-top: 16px;
+      cursor: pointer;
+      border: none;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 12px rgba(212, 162, 78, 0.2);
+      transition: all var(--transition-fast);
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-submit:hover {
+      box-shadow: 0 4px 20px rgba(212, 162, 78, 0.4);
+      transform: translateY(-1px);
     }
 
-    /* Register Form */
-    .form-section {
-      background: #141414;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 30px;
-      margin-bottom: 30px;
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
     }
-    .form-title {
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+    .empty-state p { font-size: 13px; }
+
+    /* ===== REGISTER FORM ===== */
+    .form-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-heading {
+      font-family: 'DM Serif Display', serif;
       font-size: 20px;
-      font-weight: 600;
-      color: #d4a052;
-      margin-bottom: 20px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .form-subheading {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
     }
     .form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
     }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group.full { grid-column: 1 / -1; }
-    label {
-      font-size: 12px;
-      color: #888;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-group.span-3 { grid-column: span 3; }
+    .form-label {
+      font-size: 10px;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      font-weight: 600;
     }
-    input, select {
-      background: #0a0a0a;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: #e0e0e0;
-      font-size: 14px;
-    }
-    input:focus, select:focus {
+    .form-input, .form-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      transition: border-color var(--transition-fast);
       outline: none;
-      border-color: #d4a052;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 2px rgba(212, 162, 78, 0.1);
+    }
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b5d4e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
     }
 
     /* Flavor sliders */
-    .flavor-grid {
+    .flavor-row {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 12px;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     .flavor-item {
       display: flex;
@@ -231,125 +586,397 @@
       align-items: center;
       gap: 4px;
     }
-    .flavor-item label { font-size: 11px; }
-    .flavor-item input[type="range"] {
-      width: 100%;
-      padding: 0;
+    .flavor-item .form-label { font-size: 9px; }
+    .flavor-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-primary);
     }
-    .flavor-value { font-size: 14px; font-weight: 600; color: #d4a052; }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border-subtle);
+      border-radius: 2px;
+      outline: none;
+      padding: 0;
+      border: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--gold-primary);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
 
-    /* Modal */
-    .modal-overlay {
+    /* ===== LOGS ===== */
+    .log-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.7;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .log-entry { padding: 1px 0; }
+    .log-success { color: var(--green-primary); }
+    .log-info { color: var(--blue-primary); }
+    .log-warn { color: var(--amber-primary); }
+    .log-error { color: var(--red-primary); }
+    .log-time { color: var(--text-dim); }
+
+    /* ===== PIPELINE TAB ===== */
+    .pipeline-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .pipeline-status {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .pipeline-stage {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .pipeline-stage-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    .pipeline-stage-name {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .pipeline-stage-desc {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    .pipeline-connector {
+      display: flex;
+      align-items: center;
+      color: var(--text-dim);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ===== MODAL ===== */
+    .modal-backdrop {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 100;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
       justify-content: center;
       align-items: center;
+      animation: fadeIn 200ms ease;
     }
-    .modal-overlay.show { display: flex; }
-    .modal {
-      background: #141414;
-      border: 1px solid #3d2800;
-      border-radius: 16px;
-      padding: 30px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
+    .modal-backdrop.show { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-warm);
+      border-radius: var(--radius-xl);
+      width: 640px;
+      max-width: 95vw;
+      max-height: 82vh;
       overflow-y: auto;
+      box-shadow: var(--shadow-modal);
+      animation: slideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
     .modal-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: #4ade80;
-      margin-bottom: 20px;
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+    .modal-subtitle {
+      font-size: 11px;
+      color: var(--green-primary);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     .modal-close {
-      float: right;
-      background: none;
-      border: none;
-      color: #666;
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    /* Logs */
-    .logs {
-      background: #0a0a0a;
-      border: 1px solid #2a2a2a;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 16px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-top: 20px;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
     }
-    .log-entry { padding: 2px 0; }
-    .log-success { color: #4ade80; }
-    .log-info { color: #818cf8; }
-    .log-warn { color: #fbbf24; }
-    .log-error { color: #ef4444; }
+    .modal-close:hover {
+      border-color: var(--border-warm);
+      color: var(--text-primary);
+    }
+    .modal-body { padding: 16px 24px 24px; }
 
-    /* Card image */
-    .card-img {
-      width: 100%;
-      height: 100px;
-      border-radius: 6px;
-      object-fit: cover;
-      margin-bottom: 10px;
+    .reveal-banner {
+      background: linear-gradient(135deg, rgba(176,122,232,0.1), rgba(92,184,122,0.05));
+      border: 1px solid var(--purple-border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reveal-banner-icon { font-size: 16px; }
+    .reveal-banner-text {
+      font-size: 11px;
+      color: var(--purple-primary);
+      font-weight: 600;
+      letter-spacing: 0.3px;
     }
 
-    /* Empty state */
-    .empty {
+    .reveal-section {
+      margin-bottom: 14px;
+    }
+    .reveal-section-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .reveal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .reveal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .reveal-row:nth-child(odd) { background: rgba(255,255,255,0.015); }
+    .reveal-label { color: var(--text-muted); font-size: 11px; }
+    .reveal-value { color: var(--green-primary); font-weight: 500; }
+    .reveal-value-sensitive { color: var(--red-primary); font-weight: 600; }
+
+    .flavor-bars {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
       text-align: center;
-      padding: 60px 20px;
-      color: #555;
-      grid-column: 1 / -1;
     }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .flavor-bar-item {}
+    .flavor-bar-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold-primary);
+    }
+    .flavor-bar-track {
+      width: 100%;
+      height: 3px;
+      background: var(--border-subtle);
+      border-radius: 2px;
+      margin: 4px 0;
+      overflow: hidden;
+    }
+    .flavor-bar-fill {
+      height: 100%;
+      background: var(--gold-primary);
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .flavor-bar-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .iot-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .iot-table th {
+      text-align: left;
+      padding: 4px 8px;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .iot-table td {
+      padding: 4px 8px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+    .iot-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+    .ai-reasoning {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+
+    .provenance-footer {
+      background: linear-gradient(135deg, rgba(92,184,122,0.08), rgba(92,184,122,0.03));
+      border: 1px solid var(--green-border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .provenance-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--green-dim);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .provenance-text {
+      font-size: 11px;
+      color: var(--green-primary);
+      font-weight: 600;
+    }
+    .provenance-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 1px;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-warm); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+    /* ===== LOADING ===== */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-elevated) 25%, rgba(255,255,255,0.04) 50%, var(--bg-elevated) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <div class="logo">Cocoa<span>Ledger</span></div>
-    <div class="subtitle">Verified Cacao Direct from Farm to Buyer — Powered by Rayls</div>
-  </div>
-  <div class="badge">Blockchain-Verified Traceability</div>
-</div>
-
-<div class="container">
-
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('marketplace')">Marketplace</div>
-    <div class="tab" onclick="showTab('register')">Register Lot</div>
-    <div class="tab" onclick="showTab('pipeline')">Agent Pipeline</div>
-  </div>
-
-  <!-- MARKETPLACE TAB -->
-  <div id="tab-marketplace">
-    <div class="grid" id="listings-grid">
-      <div class="empty">
-        <div class="empty-icon">🌱</div>
-        <p>No cacao lots listed yet. Register a lot to get started.</p>
-      </div>
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a0f00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">Cocoa<em>Ledger</em></div>
+      <div class="header-tagline">Verified Cacao &middot; Farm to Buyer</div>
     </div>
   </div>
+  <div class="header-right">
+    <div class="network-label">Rayls Privacy Ledger</div>
+    <div class="chain-badge">
+      <span class="chain-dot"></span>
+      On-Chain
+    </div>
+  </div>
+</header>
 
-  <!-- REGISTER TAB -->
-  <div id="tab-register" style="display:none;">
-    <div class="form-section">
-      <div class="form-title">Register New Cacao Lot</div>
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+  <!-- Tabs -->
+  <nav class="tabs" id="tab-nav">
+    <div class="tab active" data-tab="marketplace">Marketplace</div>
+    <div class="tab" data-tab="register">Register Lot</div>
+    <div class="tab" data-tab="pipeline">Agent Pipeline</div>
+  </nav>
+
+  <!-- Tab: Marketplace -->
+  <section class="tab-content active" id="tab-marketplace">
+    <div class="grid" id="listings-grid">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <p>Loading cacao lots...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: Register -->
+  <section class="tab-content" id="tab-register">
+    <div class="form-panel">
+      <div class="form-heading">Register New Cacao Lot</div>
+      <div class="form-subheading">Submit harvest data to the Rayls Privacy Node. Private fields will be encrypted and only revealed upon purchase.</div>
       <form id="lot-form">
         <div class="form-grid">
           <div class="form-group">
-            <label>Variety</label>
-            <select name="variety">
+            <label class="form-label">Variety</label>
+            <select name="variety" class="form-select">
               <option value="Criollo Fino de Aroma">Criollo Fino de Aroma</option>
               <option value="Trinitario">Trinitario</option>
               <option value="Nacional">Nacional</option>
@@ -357,32 +984,32 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Weight (kg)</label>
-            <input name="weight" type="text" placeholder="500 kg" value="500 kg" />
+            <label class="form-label">Weight (kg)</label>
+            <input name="weight" type="text" class="form-input" placeholder="500 kg" value="500 kg" />
           </div>
           <div class="form-group">
-            <label>Region</label>
-            <input name="region" type="text" placeholder="Tumaco, Nariño" value="Tumaco, Nariño" />
+            <label class="form-label">Region</label>
+            <input name="region" type="text" class="form-input" placeholder="Tumaco, Narino" value="Tumaco, Narino" />
           </div>
           <div class="form-group">
-            <label>Altitude</label>
-            <input name="altitude" type="text" placeholder="450 msnm" value="450 msnm" />
+            <label class="form-label">Altitude</label>
+            <input name="altitude" type="text" class="form-input" placeholder="450 msnm" value="450 msnm" />
           </div>
           <div class="form-group">
-            <label>Harvest</label>
-            <input name="harvest" type="text" placeholder="2026-Q1" value="2026-Q1" />
+            <label class="form-label">Harvest</label>
+            <input name="harvest" type="text" class="form-input" placeholder="2026-Q1" value="2026-Q1" />
           </div>
           <div class="form-group">
-            <label>Cooperative</label>
-            <input name="cooperativeName" type="text" placeholder="CoopCacao Tumaco" value="CoopCacao Tumaco" />
+            <label class="form-label">Cooperative</label>
+            <input name="cooperativeName" type="text" class="form-input" placeholder="CoopCacao Tumaco" value="CoopCacao Tumaco" />
           </div>
           <div class="form-group">
-            <label>Fermentation (days)</label>
-            <input name="fermentationDays" type="number" value="6" min="1" max="14" />
+            <label class="form-label">Fermentation (days)</label>
+            <input name="fermentationDays" type="number" class="form-input" value="6" min="1" max="14" />
           </div>
           <div class="form-group">
-            <label>Drying Method</label>
-            <select name="dryingMethod">
+            <label class="form-label">Drying Method</label>
+            <select name="dryingMethod" class="form-select">
               <option value="Solar, 5 days">Solar, 5 days</option>
               <option value="Solar, 7 days">Solar, 7 days</option>
               <option value="Mechanical, 1 day">Mechanical, 1 day</option>
@@ -390,165 +1017,262 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Humidity (%)</label>
-            <input name="humidity" type="text" placeholder="7.2%" value="7.2%" />
+            <label class="form-label">Humidity (%)</label>
+            <input name="humidity" type="text" class="form-input" placeholder="7.2%" value="7.2%" />
           </div>
           <div class="form-group">
-            <label>Farmer Experience (years)</label>
-            <input name="farmerExperienceYears" type="number" value="8" min="1" />
+            <label class="form-label">Farmer Experience (yrs)</label>
+            <input name="farmerExperienceYears" type="number" class="form-input" value="8" min="1" />
           </div>
-          <div class="form-group full">
-            <label>Flavor Profile</label>
-            <div class="flavor-grid">
+          <div class="form-group span-2">
+            <label class="form-label">Certifications</label>
+            <input name="certifications" type="text" class="form-input" placeholder="Organic, Rainforest Alliance" value="Organic, Rainforest Alliance" />
+          </div>
+          <div class="form-group span-3">
+            <label class="form-label">Flavor Profile</label>
+            <div class="flavor-row">
               <div class="flavor-item">
-                <label>Acidity</label>
-                <input type="range" name="fp_acidity" min="0" max="10" step="0.1" value="7.5" oninput="this.nextElementSibling.textContent=this.value">
-                <span class="flavor-value">7.5</span>
+                <label class="form-label">Acidity</label>
+                <input type="range" name="fp_acidity" min="0" max="10" step="0.1" value="7.5" oninput="this.closest('.flavor-item').querySelector('.flavor-val').textContent=this.value">
+                <span class="flavor-val">7.5</span>
               </div>
               <div class="flavor-item">
-                <label>Bitterness</label>
-                <input type="range" name="fp_bitterness" min="0" max="10" step="0.1" value="4.2" oninput="this.nextElementSibling.textContent=this.value">
-                <span class="flavor-value">4.2</span>
+                <label class="form-label">Bitterness</label>
+                <input type="range" name="fp_bitterness" min="0" max="10" step="0.1" value="4.2" oninput="this.closest('.flavor-item').querySelector('.flavor-val').textContent=this.value">
+                <span class="flavor-val">4.2</span>
               </div>
               <div class="flavor-item">
-                <label>Fruitiness</label>
-                <input type="range" name="fp_fruitiness" min="0" max="10" step="0.1" value="8.1" oninput="this.nextElementSibling.textContent=this.value">
-                <span class="flavor-value">8.1</span>
+                <label class="form-label">Fruitiness</label>
+                <input type="range" name="fp_fruitiness" min="0" max="10" step="0.1" value="8.1" oninput="this.closest('.flavor-item').querySelector('.flavor-val').textContent=this.value">
+                <span class="flavor-val">8.1</span>
               </div>
               <div class="flavor-item">
-                <label>Floral</label>
-                <input type="range" name="fp_floral" min="0" max="10" step="0.1" value="6.8" oninput="this.nextElementSibling.textContent=this.value">
-                <span class="flavor-value">6.8</span>
+                <label class="form-label">Floral</label>
+                <input type="range" name="fp_floral" min="0" max="10" step="0.1" value="6.8" oninput="this.closest('.flavor-item').querySelector('.flavor-val').textContent=this.value">
+                <span class="flavor-val">6.8</span>
               </div>
               <div class="flavor-item">
-                <label>Body</label>
-                <input type="range" name="fp_body" min="0" max="10" step="0.1" value="7.9" oninput="this.nextElementSibling.textContent=this.value">
-                <span class="flavor-value">7.9</span>
+                <label class="form-label">Body</label>
+                <input type="range" name="fp_body" min="0" max="10" step="0.1" value="7.9" oninput="this.closest('.flavor-item').querySelector('.flavor-val').textContent=this.value">
+                <span class="flavor-val">7.9</span>
               </div>
             </div>
           </div>
-          <div class="form-group full">
-            <label>Certifications</label>
-            <input name="certifications" type="text" placeholder="Organic, Rainforest Alliance" value="Organic, Rainforest Alliance" />
-          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Register Lot on Privacy Node</button>
+        <button type="submit" class="btn-submit">Register Lot on Privacy Node</button>
       </form>
-      <div class="logs" id="register-logs" style="display:none;"></div>
+      <div class="log-box" id="register-logs" style="display:none;"></div>
     </div>
-  </div>
+  </section>
 
-  <!-- PIPELINE TAB -->
-  <div id="tab-pipeline" style="display:none;">
-    <div class="form-section">
-      <div class="form-title">Agent Pipeline Status</div>
-      <p style="color:#888; margin-bottom:16px;">Watch the AI agent verify, attest, bridge, and list cacao lots in real-time.</p>
-      <div class="grid" id="pipeline-grid"></div>
-      <div class="logs" id="pipeline-logs">
-        <div class="log-entry log-info">Waiting for agent activity...</div>
+  <!-- Tab: Pipeline -->
+  <section class="tab-content" id="tab-pipeline">
+    <div class="pipeline-panel">
+      <div class="form-heading">Agent Pipeline</div>
+      <div class="form-subheading" style="margin-bottom:14px;">The AI agent autonomously verifies, attests, bridges, and lists cacao lots across the Rayls network.</div>
+      <div class="pipeline-status">
+        <div class="pipeline-stage">
+          <div class="pipeline-stage-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue-primary)" stroke-width="2" stroke-linecap="round"><path d="M12 2v4m0 12v4m-6.93-2.93l2.83-2.83m8.2-8.2l2.83-2.83M2 12h4m12 0h4m-2.93 6.93l-2.83-2.83M6.1 6.1L3.27 3.27"/></svg>
+          </div>
+          <div class="pipeline-stage-name">Register</div>
+          <div class="pipeline-stage-desc">Privacy Node mint</div>
+        </div>
+        <div class="pipeline-connector">&rarr;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-stage-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green-primary)" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <div class="pipeline-stage-name">AI Verify</div>
+          <div class="pipeline-stage-desc">Quality scoring</div>
+        </div>
+        <div class="pipeline-connector">&rarr;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-stage-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--amber-primary)" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="pipeline-stage-name">Bridge</div>
+          <div class="pipeline-stage-desc">Commit Chain transfer</div>
+        </div>
+        <div class="pipeline-connector">&rarr;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-stage-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple-primary)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 0 0-8 0v2"/></svg>
+          </div>
+          <div class="pipeline-stage-name">List</div>
+          <div class="pipeline-stage-desc">Marketplace publish</div>
+        </div>
+      </div>
+      <div class="log-box" id="pipeline-logs">
+        <div class="log-entry log-info"><span class="log-time">[--:--:--]</span> Waiting for agent activity...</div>
       </div>
     </div>
-  </div>
+  </section>
 
-</div>
+</main>
 
-<!-- REVEAL MODAL -->
-<div class="modal-overlay" id="reveal-modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">&times;</button>
-    <div class="modal-title">Full Provenance Revealed</div>
-    <div id="reveal-content"></div>
+<!-- ===== REVEAL MODAL ===== -->
+<div class="modal-backdrop" id="reveal-modal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Full Supply Chain Data</div>
+        <div class="modal-subtitle">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Provenance Verified
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body" id="reveal-content"></div>
   </div>
 </div>
 
 <script>
 const API = '';
 
-function showTab(name) {
-  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById(`tab-${name}`).style.display = 'block';
-  event.target.classList.add('active');
-  if (name === 'marketplace') loadLots();
-}
+/* ===== IMAGE MAP ===== */
+const LOT_IMAGES = {
+  1: 'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?w=400&h=200&fit=crop',
+  2: 'https://images.unsplash.com/photo-1571939228382-b2f2b585ce15?w=400&h=200&fit=crop',
+  3: 'https://images.unsplash.com/photo-1599599810694-e5b4388ed8e1?w=400&h=200&fit=crop',
+  4: 'https://images.unsplash.com/photo-1526081347589-7fa3cb41b4b2?w=400&h=200&fit=crop',
+};
+const DEFAULT_IMG = 'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?w=400&h=200&fit=crop';
 
+/* ===== TABS ===== */
+document.getElementById('tab-nav').addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  const name = tab.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'marketplace') loadLots();
+});
+
+/* ===== LOAD LOTS ===== */
 async function loadLots() {
   const grid = document.getElementById('listings-grid');
   try {
-    const res = await fetch(`${API}/api/lots`);
+    const res = await fetch(`${API}/api/cacao-market/lots`);
     const lots = await res.json();
 
     if (lots.length === 0) {
-      grid.innerHTML = `<div class="empty"><div class="empty-icon">🌱</div><p>No cacao lots yet. Register one to get started.</p></div>`;
+      grid.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          <p>No cacao lots listed yet. Register a lot to get started.</p>
+        </div>`;
       return;
     }
 
-    grid.innerHTML = lots.map(lot => {
-      const statusClass = `status-${lot.status}`;
-      const hasAI = lot.aiScore !== undefined;
-      const scoreColor = lot.aiScore >= 80 ? 'score-high' : lot.aiScore >= 50 ? 'score-medium' : 'score-low';
-      const iotCount = lot.iotReadings ? lot.iotReadings.length : 0;
-
-      let buttonHtml = '';
-      if (lot.status === 'revealed') {
-        buttonHtml = `<button class="btn btn-reveal" onclick="viewReveal(${lot.tokenId})">View Full Supply Chain Data</button>`;
-      } else if (lot.status === 'listed') {
-        buttonHtml = `<button class="btn btn-primary" onclick="buyAndReveal(${lot.tokenId})">Purchase Harvest Lot</button>`;
-      } else if (lot.status === 'rejected') {
-        buttonHtml = `<button class="btn btn-disabled" disabled>Quality Below Standard</button>`;
-      } else if (lot.status === 'attested') {
-        buttonHtml = `<button class="btn btn-disabled" disabled>Awaiting Listing</button>`;
-      } else {
-        buttonHtml = `<button class="btn btn-disabled" disabled>AI Grading In Progress</button>`;
-      }
-
-      const images = {
-        1: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&h=200&fit=crop',
-        2: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400&h=200&fit=crop',
-        3: 'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400&h=200&fit=crop',
-        4: 'https://images.unsplash.com/photo-1610611424854-5e07b4928e67?w=400&h=200&fit=crop',
-      };
-      const img = images[lot.tokenId] || 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&h=200&fit=crop';
-      return `
-        <div class="card">
-          <img class="card-img" src="${img}" alt="Cacao lot" onerror="this.style.background='#2d1800';this.style.height='100px';this.alt='🌱';" />
-          <div class="card-header">
-            <div>
-              <div class="card-title">${lot.variety || 'Cacao Lot'}</div>
-              <div class="card-id">Token #${lot.tokenId} · ${lot.weight} · ${lot.harvest}</div>
-            </div>
-            <span class="status-badge ${statusClass}">${lot.status}</span>
-          </div>
-          <div class="info-row"><span class="info-label">IoT Data</span><span class="info-value">${iotCount > 0 ? iotCount + ' readings' : '—'}</span></div>
-          <div class="info-row"><span class="info-label">Region</span><span class="info-private">🔒 PRIVATE</span></div>
-          <div class="info-row"><span class="info-label">GPS</span><span class="info-private">🔒 PRIVATE</span></div>
-          <div class="info-row"><span class="info-label">Price/kg</span><span class="info-private">🔒 PRIVATE</span></div>
-          <div class="info-row"><span class="info-label">Flavor</span><span class="info-private">🔒 PRIVATE</span></div>
-          ${hasAI ? `
-          <div style="margin-top:8px; padding:8px; background:#0a0a0a; border-radius:6px; border:1px solid #2a2a2a;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:${lot.aiGrade === 'A' ? '#4ade80' : lot.aiGrade === 'B' ? '#22d3ee' : lot.aiGrade === 'C' ? '#fbbf24' : '#ef4444'}; background:${lot.aiGrade === 'A' ? '#1a2e1a' : lot.aiGrade === 'B' ? '#1a2e2e' : lot.aiGrade === 'C' ? '#2e2a1a' : '#2e1a1a'}; padding:2px 8px; border-radius:4px;">Grade ${lot.aiGrade || '?'}</span>
-              <span style="color:${lot.aiScore >= 80 ? '#4ade80' : lot.aiScore >= 50 ? '#fbbf24' : '#ef4444'}; font-weight:700; font-size:16px;">${lot.aiScore}/100</span>
-            </div>
-            <div class="score-bar"><div class="score-fill ${scoreColor}" style="width:${lot.aiScore}%"></div></div>
-            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:9px;">
-              <span style="color:${lot.aiOrigin === 'VERIFIED' ? '#4ade80' : '#ef4444'};">Origin: ${lot.aiOrigin || 'N/A'}</span>
-              <span style="color:#fbbf24;">Premium: ${lot.aiPremium || '0%'}</span>
-            </div>
-          </div>` : ''}
-          ${buttonHtml}
-        </div>`;
-    }).join('');
+    grid.innerHTML = lots.map(lot => renderCard(lot)).join('');
   } catch (e) {
-    grid.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error loading lots: ${e.message}</p></div>`;
+    grid.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--red-primary)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        <p style="color:var(--red-primary);">Error loading lots: ${e.message}</p>
+      </div>`;
   }
 }
 
+function renderCard(lot) {
+  const img = LOT_IMAGES[lot.tokenId] || DEFAULT_IMG;
+  const hasAI = lot.aiScore !== undefined && lot.aiScore !== null;
+  const grade = lot.aiGrade || '?';
+  const gradeClass = ['A','B','C','D'].includes(grade) ? `grade-${grade}` : 'grade-D';
+  const fillClass = ['A','B','C','D'].includes(grade) ? `fill-${grade}` : 'fill-none';
+  const scoreColor = grade === 'A' ? 'var(--green-primary)' : grade === 'B' ? 'var(--cyan-primary)' : grade === 'C' ? 'var(--amber-primary)' : 'var(--red-primary)';
+  const iotCount = lot.iotReadings ? lot.iotReadings.length : 0;
+
+  let btnHtml = '';
+  if (lot.status === 'listed') {
+    btnHtml = `<button class="btn btn-purchase" onclick="buyAndReveal(${lot.tokenId})">Purchase Harvest Lot</button>`;
+  } else if (lot.status === 'revealed') {
+    btnHtml = `<button class="btn btn-view" onclick="viewReveal(${lot.tokenId})">View Full Supply Chain Data</button>`;
+  } else if (lot.status === 'rejected') {
+    btnHtml = `<button class="btn btn-rejected" disabled>Quality Below Standard</button>`;
+  } else if (lot.status === 'attested') {
+    btnHtml = `<button class="btn btn-disabled" disabled>Awaiting Listing</button>`;
+  } else {
+    btnHtml = `<button class="btn btn-disabled" disabled>AI Grading In Progress</button>`;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-img-wrap">
+        <img class="card-img" src="${img}" alt="${lot.variety || 'Cacao'}" loading="lazy"
+          onerror="this.style.display='none'" />
+        <div class="card-img-overlay"></div>
+        <div class="card-status">
+          <span class="status-pill status-${lot.status}">${lot.status}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-variety">${lot.variety || 'Cacao Lot'}</div>
+          <span class="card-token">#${lot.tokenId}</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v1m0 16v1m8.66-13.5l-.87.5M4.21 16l-.87.5M20.66 16l-.87-.5M4.21 8l-.87-.5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/></svg>
+            ${lot.weight}
+          </span>
+          <span class="meta-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            ${lot.harvest}
+          </span>
+          <span class="meta-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            ${iotCount > 0 ? iotCount + ' IoT' : 'No IoT'}
+          </span>
+        </div>
+        <div class="private-fields">
+          <div class="pf-item"><span class="pf-label">Region</span><span class="pf-lock">&#128274; Private</span></div>
+          <div class="pf-item"><span class="pf-label">GPS</span><span class="pf-lock">&#128274; Private</span></div>
+          <div class="pf-item"><span class="pf-label">Price/kg</span><span class="pf-lock">&#128274; Private</span></div>
+          <div class="pf-item"><span class="pf-label">Flavor</span><span class="pf-lock">&#128274; Private</span></div>
+        </div>
+        ${hasAI ? `
+        <div class="ai-section">
+          <div class="ai-top">
+            <div>
+              <div class="ai-label">AI Quality Score</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="grade-badge ${gradeClass}">${grade}</span>
+              <span class="ai-score-num" style="color:${scoreColor}">${lot.aiScore}</span>
+            </div>
+          </div>
+          <div class="score-track"><div class="score-fill ${fillClass}" style="width:${lot.aiScore}%"></div></div>
+          <div class="ai-bottom">
+            <span class="ai-origin">
+              <span class="origin-dot ${lot.aiOrigin === 'VERIFIED' ? 'origin-verified' : 'origin-unverified'}"></span>
+              <span style="color:${lot.aiOrigin === 'VERIFIED' ? 'var(--green-primary)' : 'var(--red-primary)'}">Origin ${lot.aiOrigin || 'N/A'}</span>
+            </span>
+            <span class="ai-premium">Premium ${lot.aiPremium || '0%'}</span>
+          </div>
+        </div>` : `
+        <div class="ai-section" style="opacity:0.5;">
+          <div class="ai-top">
+            <div class="ai-label">AI Quality Score</div>
+            <span style="font-size:10px;color:var(--text-dim);">Pending</span>
+          </div>
+          <div class="score-track"><div class="score-fill fill-none" style="width:0%"></div></div>
+        </div>`}
+        <div class="card-action">${btnHtml}</div>
+      </div>
+    </div>`;
+}
+
+/* ===== PURCHASE / REVEAL ===== */
 async function buyAndReveal(tokenId) {
   try {
-    const res = await fetch(`${API}/api/lot/${tokenId}/reveal`, { method: 'POST' });
+    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/reveal`, { method: 'POST' });
     const data = await res.json();
-    showRevealModal(data.fullMetadata);
+    showRevealModal(data.fullMetadata || data);
     loadLots();
   } catch (e) {
     alert('Error: ' + e.message);
@@ -557,7 +1281,7 @@ async function buyAndReveal(tokenId) {
 
 async function viewReveal(tokenId) {
   try {
-    const res = await fetch(`${API}/api/lot/${tokenId}`);
+    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}`);
     const data = await res.json();
     showRevealModal(data);
   } catch (e) {
@@ -567,56 +1291,87 @@ async function viewReveal(tokenId) {
 
 function showRevealModal(data) {
   const content = document.getElementById('reveal-content');
-  const iotHtml = data.iotReadings ? data.iotReadings.map(r =>
-    `<tr><td>${r.time}</td><td>${r.temp}</td><td>${r.humidity}</td><td>${r.soil}</td><td>${r.rain}</td></tr>`
+  const title = document.getElementById('modal-title');
+  title.textContent = `${data.variety || 'Cacao Lot'} — Full Data`;
+
+  const iotRows = data.iotReadings ? data.iotReadings.map(r =>
+    `<tr><td>${r.time || '-'}</td><td>${r.temp || '-'}</td><td>${r.humidity || '-'}</td><td>${r.soil || '-'}</td><td>${r.rain || '-'}</td></tr>`
   ).join('') : '';
 
+  const fp = data.flavorProfile;
+
   content.innerHTML = `
-    <div style="margin-bottom:16px; padding:12px; background:#2e1a2e; border-radius:8px; border:1px solid #4a1a4a;">
-      <span style="color:#e879f9; font-weight:600;">PREVIOUSLY HIDDEN DATA — Now revealed to buyer</span>
+    <div class="reveal-banner">
+      <span class="reveal-banner-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple-primary)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </span>
+      <span class="reveal-banner-text">Previously hidden data — now revealed to buyer</span>
     </div>
-    <div class="info-row"><span class="info-label">Variety</span><span class="info-value">${data.variety || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Region</span><span class="info-value" style="color:#4ade80">${data.region || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Altitude</span><span class="info-value" style="color:#4ade80">${data.altitude || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">GPS</span><span class="info-value" style="color:#4ade80">${data.gps ? data.gps.lat + ', ' + data.gps.lon : 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Cooperative</span><span class="info-value" style="color:#4ade80">${data.cooperativeName || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Farmer Experience</span><span class="info-value" style="color:#4ade80">${data.farmerExperienceYears || 'N/A'} years</span></div>
-    <div class="info-row"><span class="info-label">Fermentation</span><span class="info-value" style="color:#4ade80">${data.fermentationDays || 'N/A'} days</span></div>
-    <div class="info-row"><span class="info-label">Drying</span><span class="info-value" style="color:#4ade80">${data.dryingMethod || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Humidity</span><span class="info-value" style="color:#4ade80">${data.humidity || 'N/A'}</span></div>
-    <div class="info-row"><span class="info-label">Purchase Price</span><span class="info-value" style="color:#ef4444">${data.purchasePricePerKg || 'N/A'}/kg</span></div>
-    <div class="info-row"><span class="info-label">Production Cost</span><span class="info-value" style="color:#ef4444">${data.productionCostPerKg || 'N/A'}/kg</span></div>
-    <div class="info-row"><span class="info-label">Certifications</span><span class="info-value" style="color:#4ade80">${Array.isArray(data.certifications) ? data.certifications.join(', ') : data.certifications || 'N/A'}</span></div>
-    ${data.flavorProfile ? `
-    <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2a2a;">
-      <span class="info-label">Flavor Profile</span>
-      <div style="display:grid; grid-template-columns: repeat(5,1fr); gap:8px; margin-top:8px; text-align:center;">
-        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.acidity}</div><div style="color:#666; font-size:11px;">Acidity</div></div>
-        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.bitterness}</div><div style="color:#666; font-size:11px;">Bitter</div></div>
-        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.fruitiness}</div><div style="color:#666; font-size:11px;">Fruity</div></div>
-        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.floral}</div><div style="color:#666; font-size:11px;">Floral</div></div>
-        <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.body}</div><div style="color:#666; font-size:11px;">Body</div></div>
+
+    <div class="reveal-section">
+      <div class="reveal-section-title">Origin &amp; Production</div>
+      <div class="reveal-grid">
+        <div class="reveal-row"><span class="reveal-label">Variety</span><span class="reveal-value">${data.variety || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Region</span><span class="reveal-value">${data.region || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Altitude</span><span class="reveal-value">${data.altitude || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">GPS</span><span class="reveal-value">${data.gps ? data.gps.lat + ', ' + data.gps.lon : 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Cooperative</span><span class="reveal-value">${data.cooperativeName || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Farmer Exp.</span><span class="reveal-value">${data.farmerExperienceYears || 'N/A'} yrs</span></div>
+        <div class="reveal-row"><span class="reveal-label">Fermentation</span><span class="reveal-value">${data.fermentationDays || 'N/A'} days</span></div>
+        <div class="reveal-row"><span class="reveal-label">Drying</span><span class="reveal-value">${data.dryingMethod || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Humidity</span><span class="reveal-value">${data.humidity || 'N/A'}</span></div>
+        <div class="reveal-row"><span class="reveal-label">Certifications</span><span class="reveal-value">${Array.isArray(data.certifications) ? data.certifications.join(', ') : data.certifications || 'N/A'}</span></div>
+      </div>
+    </div>
+
+    <div class="reveal-section">
+      <div class="reveal-section-title">Financials (Sensitive)</div>
+      <div class="reveal-grid">
+        <div class="reveal-row"><span class="reveal-label">Purchase Price</span><span class="reveal-value-sensitive">${data.purchasePricePerKg || 'N/A'}/kg</span></div>
+        <div class="reveal-row"><span class="reveal-label">Production Cost</span><span class="reveal-value-sensitive">${data.productionCostPerKg || 'N/A'}/kg</span></div>
+      </div>
+    </div>
+
+    ${fp ? `
+    <div class="reveal-section">
+      <div class="reveal-section-title">Flavor Profile</div>
+      <div class="flavor-bars">
+        ${['acidity','bitterness','fruitiness','floral','body'].map(key => `
+          <div class="flavor-bar-item">
+            <div class="flavor-bar-value">${fp[key] || 0}</div>
+            <div class="flavor-bar-track"><div class="flavor-bar-fill" style="width:${(fp[key] || 0) * 10}%"></div></div>
+            <div class="flavor-bar-label">${key}</div>
+          </div>
+        `).join('')}
       </div>
     </div>` : ''}
+
     ${data.iotReadings && data.iotReadings.length > 0 ? `
-    <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2a2a;">
-      <span class="info-label">IoT Sensor Data</span>
-      <table style="width:100%; margin-top:8px; font-size:12px; border-collapse:collapse;">
-        <tr style="color:#888;"><th style="text-align:left;padding:4px;">Time</th><th>Temp</th><th>Humidity</th><th>Soil</th><th>Rain</th></tr>
-        ${iotHtml}
+    <div class="reveal-section">
+      <div class="reveal-section-title">IoT Sensor Data</div>
+      <table class="iot-table">
+        <thead><tr><th>Time</th><th>Temp</th><th>Humidity</th><th>Soil</th><th>Rain</th></tr></thead>
+        <tbody>${iotRows}</tbody>
       </table>
-      <div style="margin-top:8px; font-size:11px; color:#666;">Data collected from on-farm IoT sensors — stored on Rayls Privacy Node</div>
     </div>` : ''}
+
     ${data.aiReason ? `
-    <div style="margin-top:16px; padding:12px; background:#0a0a0a; border-radius:8px; border:1px solid #2a2a2a;">
-      <span style="color:#888; font-size:12px; text-transform:uppercase;">AI Analysis</span>
-      <p style="margin-top:6px; font-size:13px; color:#ccc; line-height:1.5;">${data.aiReason}</p>
+    <div class="reveal-section">
+      <div class="reveal-section-title">AI Analysis</div>
+      <div class="ai-reasoning">${data.aiReason}</div>
     </div>` : ''}
-    <div style="margin-top:20px; padding:12px; background:#1a2e1a; border-radius:8px; border:1px solid #2d4a2d;">
-      <span style="color:#4ade80; font-weight:600;">Provenance verified on Rayls Privacy Node</span><br>
-      <span style="color:#888; font-size:12px;">This data was private until purchase. Only you can see it.</span>
+
+    <div class="provenance-footer">
+      <div class="provenance-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-primary)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div class="provenance-text">Provenance verified on Rayls Privacy Node</div>
+        <div class="provenance-sub">This data was encrypted until purchase. Only you can see it.</div>
+      </div>
     </div>
   `;
+
   document.getElementById('reveal-modal').classList.add('show');
 }
 
@@ -624,7 +1379,17 @@ function closeModal() {
   document.getElementById('reveal-modal').classList.remove('show');
 }
 
-// Form submission
+// Close modal on backdrop click
+document.getElementById('reveal-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ===== REGISTER FORM ===== */
 document.getElementById('lot-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
@@ -655,7 +1420,7 @@ document.getElementById('lot-form').addEventListener('submit', async (e) => {
   addLog(logs, 'info', 'Registering cacao lot on Privacy Node...');
 
   try {
-    const res = await fetch(`${API}/api/lot`, {
+    const res = await fetch(`${API}/api/cacao-market/lot`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -665,7 +1430,7 @@ document.getElementById('lot-form').addEventListener('submit', async (e) => {
     if (data.success) {
       addLog(logs, 'success', `Lot #${data.tokenId} minted on Privacy Node`);
       addLog(logs, 'info', 'Metadata stored privately. Only AI agent can read it.');
-      addLog(logs, 'info', 'Waiting for AI verification...');
+      addLog(logs, 'warn', 'Waiting for AI verification pipeline...');
     } else {
       addLog(logs, 'error', `Error: ${data.error}`);
     }
@@ -678,14 +1443,13 @@ function addLog(container, type, msg) {
   const entry = document.createElement('div');
   entry.className = `log-entry log-${type}`;
   const time = new Date().toLocaleTimeString();
-  entry.textContent = `[${time}] ${msg}`;
+  entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
   container.appendChild(entry);
   container.scrollTop = container.scrollHeight;
 }
 
-// Initial load
+/* ===== INIT ===== */
 loadLots();
-// Auto-refresh every 5s
 setInterval(loadLots, 5000);
 </script>
 

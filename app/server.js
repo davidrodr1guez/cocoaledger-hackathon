@@ -205,7 +205,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // POST /api/lot — Register a new cacao lot (mint NFT with metadata)
-app.post('/api/lot', async (req, res) => {
+app.post('/api/cacao-market/lot', async (req, res) => {
   try {
     const metadata = req.body;
 
@@ -248,8 +248,8 @@ app.post('/api/lot', async (req, res) => {
   }
 });
 
-// GET /api/lot/:tokenId — Get lot info (respects privacy)
-app.get('/api/lot/:tokenId', (req, res) => {
+// GET /api/cacao-market/lot/:tokenId — Get lot info (respects privacy)
+app.get('/api/cacao-market/lot/:tokenId', (req, res) => {
   const tokenId = parseInt(req.params.tokenId);
   const lot = lotMetadata[tokenId];
 
@@ -281,8 +281,8 @@ app.get('/api/lot/:tokenId', (req, res) => {
   return res.json({ tokenId, status: 'revealed', ...lot });
 });
 
-// POST /api/lot/:tokenId/reveal — Reveal full metadata (after purchase)
-app.post('/api/lot/:tokenId/reveal', (req, res) => {
+// POST /api/cacao-market/lot/:tokenId/reveal — Reveal full metadata (after purchase)
+app.post('/api/cacao-market/lot/:tokenId/reveal', (req, res) => {
   const tokenId = parseInt(req.params.tokenId);
   const lot = lotMetadata[tokenId];
 
@@ -302,7 +302,7 @@ app.post('/api/lot/:tokenId/reveal', (req, res) => {
 });
 
 // GET /api/lots — List all lots with their public status + AI scores (no private data)
-app.get('/api/lots', (req, res) => {
+app.get('/api/cacao-market/lots', (req, res) => {
   const lots = Object.values(lotMetadata).map((lot) => ({
     tokenId: lot.tokenId,
     variety: lot.variety,
@@ -323,8 +323,8 @@ app.get('/api/lots', (req, res) => {
   res.json(lots);
 });
 
-// POST /api/lot/:tokenId/bridge — Bridge NFT to public chain
-app.post('/api/lot/:tokenId/bridge', async (req, res) => {
+// POST /api/cacao-market/lot/:tokenId/bridge — Bridge NFT to public chain
+app.post('/api/cacao-market/lot/:tokenId/bridge', async (req, res) => {
   const tokenId = parseInt(req.params.tokenId);
   const lot = lotMetadata[tokenId];
 
@@ -348,7 +348,7 @@ app.post('/api/lot/:tokenId/bridge', async (req, res) => {
 });
 
 // GET /api/attestations — Get all attestations from public chain
-app.get('/api/attestations', async (req, res) => {
+app.get('/api/cacao-market/attestations', async (req, res) => {
   const attestAddr = process.env.ATTESTATION_ADDRESS;
   if (!attestAddr) {
     return res.json([]);
@@ -375,7 +375,7 @@ app.get('/api/attestations', async (req, res) => {
 });
 
 // GET /api/marketplace/listings — Get active marketplace listings
-app.get('/api/marketplace/listings', async (req, res) => {
+app.get('/api/cacao-market/listings', async (req, res) => {
   const marketAddr = process.env.MARKETPLACE_ADDRESS;
   if (!marketAddr || !publicWallet) {
     return res.json([]);
