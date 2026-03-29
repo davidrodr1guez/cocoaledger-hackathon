@@ -17,49 +17,49 @@
     .header {
       background: linear-gradient(135deg, #1a0f00 0%, #2d1800 50%, #1a0f00 100%);
       border-bottom: 1px solid #3d2800;
-      padding: 20px 40px;
+      padding: 10px 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
     .logo {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 700;
       color: #d4a052;
     }
     .logo span { color: #8b6914; }
     .subtitle {
       color: #8b8b8b;
-      font-size: 14px;
+      font-size: 11px;
     }
     .badge {
       background: #1a2e1a;
       color: #4ade80;
-      padding: 6px 14px;
+      padding: 4px 10px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 600;
       border: 1px solid #2d4a2d;
     }
 
     /* Main */
-    .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 12px 16px; }
 
     /* Tabs */
     .tabs {
       display: flex;
       gap: 4px;
-      margin-bottom: 30px;
+      margin-bottom: 12px;
       background: #141414;
-      border-radius: 10px;
-      padding: 4px;
+      border-radius: 8px;
+      padding: 3px;
       width: fit-content;
     }
     .tab {
-      padding: 10px 24px;
-      border-radius: 8px;
+      padding: 6px 18px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 500;
       color: #888;
       transition: all 0.2s;
@@ -73,14 +73,14 @@
     /* Cards */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
     }
     .card {
       background: #141414;
       border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 24px;
+      border-radius: 10px;
+      padding: 14px;
       transition: border-color 0.2s;
     }
     .card:hover { border-color: #3d2800; }
@@ -89,23 +89,23 @@
       display: flex;
       justify-content: space-between;
       align-items: start;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
     .card-title {
-      font-size: 18px;
+      font-size: 13px;
       font-weight: 600;
       color: #d4a052;
     }
     .card-id {
       color: #666;
-      font-size: 12px;
+      font-size: 10px;
       font-family: monospace;
     }
 
     .status-badge {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 9px;
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -118,9 +118,9 @@
     .info-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 4px 0;
       border-bottom: 1px solid #1e1e1e;
-      font-size: 14px;
+      font-size: 11px;
     }
     .info-label { color: #666; }
     .info-value { color: #ccc; font-weight: 500; }
@@ -152,15 +152,15 @@
 
     /* Buttons */
     .btn {
-      padding: 10px 20px;
+      padding: 7px 14px;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
       width: 100%;
-      margin-top: 16px;
+      margin-top: 8px;
     }
     .btn-primary {
       background: linear-gradient(135deg, #d4a052, #8b6914);
@@ -294,11 +294,21 @@
     .log-warn { color: #fbbf24; }
     .log-error { color: #ef4444; }
 
+    /* Card image */
+    .card-img {
+      width: 100%;
+      height: 100px;
+      border-radius: 6px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
     /* Empty state */
     .empty {
       text-align: center;
       padding: 60px 20px;
       color: #555;
+      grid-column: 1 / -1;
     }
     .empty-icon { font-size: 48px; margin-bottom: 16px; }
   </style>
@@ -308,9 +318,9 @@
 <div class="header">
   <div>
     <div class="logo">Cocoa<span>Ledger</span></div>
-    <div class="subtitle">Cacao Farm IoT Traceability — Powered by Rayls</div>
+    <div class="subtitle">Verified Cacao Direct from Farm to Buyer — Powered by Rayls</div>
   </div>
-  <div class="badge">Confidential NFT Reveal</div>
+  <div class="badge">Blockchain-Verified Traceability</div>
 </div>
 
 <div class="container">
@@ -475,26 +485,58 @@ async function loadLots() {
 
     grid.innerHTML = lots.map(lot => {
       const statusClass = `status-${lot.status}`;
+      const hasAI = lot.aiScore !== undefined;
+      const scoreColor = lot.aiScore >= 80 ? 'score-high' : lot.aiScore >= 50 ? 'score-medium' : 'score-low';
+      const iotCount = lot.iotReadings ? lot.iotReadings.length : 0;
+
+      let buttonHtml = '';
+      if (lot.status === 'revealed') {
+        buttonHtml = `<button class="btn btn-reveal" onclick="viewReveal(${lot.tokenId})">View Full Supply Chain Data</button>`;
+      } else if (lot.status === 'listed') {
+        buttonHtml = `<button class="btn btn-primary" onclick="buyAndReveal(${lot.tokenId})">Purchase Harvest Lot</button>`;
+      } else if (lot.status === 'rejected') {
+        buttonHtml = `<button class="btn btn-disabled" disabled>Quality Below Standard</button>`;
+      } else if (lot.status === 'attested') {
+        buttonHtml = `<button class="btn btn-disabled" disabled>Awaiting Listing</button>`;
+      } else {
+        buttonHtml = `<button class="btn btn-disabled" disabled>AI Grading In Progress</button>`;
+      }
+
+      const images = {
+        1: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&h=200&fit=crop',
+        2: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400&h=200&fit=crop',
+        3: 'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400&h=200&fit=crop',
+        4: 'https://images.unsplash.com/photo-1610611424854-5e07b4928e67?w=400&h=200&fit=crop',
+      };
+      const img = images[lot.tokenId] || 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&h=200&fit=crop';
       return `
         <div class="card">
+          <img class="card-img" src="${img}" alt="Cacao lot" onerror="this.style.background='#2d1800';this.style.height='100px';this.alt='🌱';" />
           <div class="card-header">
             <div>
               <div class="card-title">${lot.variety || 'Cacao Lot'}</div>
-              <div class="card-id">Token #${lot.tokenId}</div>
+              <div class="card-id">Token #${lot.tokenId} · ${lot.weight} · ${lot.harvest}</div>
             </div>
             <span class="status-badge ${statusClass}">${lot.status}</span>
           </div>
-          <div class="info-row"><span class="info-label">Weight</span><span class="info-value">${lot.weight}</span></div>
-          <div class="info-row"><span class="info-label">Harvest</span><span class="info-value">${lot.harvest}</span></div>
+          <div class="info-row"><span class="info-label">IoT Data</span><span class="info-value">${iotCount > 0 ? iotCount + ' readings' : '—'}</span></div>
           <div class="info-row"><span class="info-label">Region</span><span class="info-private">🔒 PRIVATE</span></div>
-          <div class="info-row"><span class="info-label">Cooperative</span><span class="info-private">🔒 PRIVATE</span></div>
-          <div class="info-row"><span class="info-label">Flavor Profile</span><span class="info-private">🔒 PRIVATE</span></div>
-          ${lot.status === 'revealed'
-            ? `<button class="btn btn-reveal" onclick="viewReveal(${lot.tokenId})">View Full Provenance</button>`
-            : lot.status === 'listed'
-            ? `<button class="btn btn-primary" onclick="buyAndReveal(${lot.tokenId})">Buy & Reveal</button>`
-            : `<button class="btn btn-disabled" disabled>Awaiting AI Verification</button>`
-          }
+          <div class="info-row"><span class="info-label">GPS</span><span class="info-private">🔒 PRIVATE</span></div>
+          <div class="info-row"><span class="info-label">Price/kg</span><span class="info-private">🔒 PRIVATE</span></div>
+          <div class="info-row"><span class="info-label">Flavor</span><span class="info-private">🔒 PRIVATE</span></div>
+          ${hasAI ? `
+          <div style="margin-top:8px; padding:8px; background:#0a0a0a; border-radius:6px; border:1px solid #2a2a2a;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:${lot.aiGrade === 'A' ? '#4ade80' : lot.aiGrade === 'B' ? '#22d3ee' : lot.aiGrade === 'C' ? '#fbbf24' : '#ef4444'}; background:${lot.aiGrade === 'A' ? '#1a2e1a' : lot.aiGrade === 'B' ? '#1a2e2e' : lot.aiGrade === 'C' ? '#2e2a1a' : '#2e1a1a'}; padding:2px 8px; border-radius:4px;">Grade ${lot.aiGrade || '?'}</span>
+              <span style="color:${lot.aiScore >= 80 ? '#4ade80' : lot.aiScore >= 50 ? '#fbbf24' : '#ef4444'}; font-weight:700; font-size:16px;">${lot.aiScore}/100</span>
+            </div>
+            <div class="score-bar"><div class="score-fill ${scoreColor}" style="width:${lot.aiScore}%"></div></div>
+            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:9px;">
+              <span style="color:${lot.aiOrigin === 'VERIFIED' ? '#4ade80' : '#ef4444'};">Origin: ${lot.aiOrigin || 'N/A'}</span>
+              <span style="color:#fbbf24;">Premium: ${lot.aiPremium || '0%'}</span>
+            </div>
+          </div>` : ''}
+          ${buttonHtml}
         </div>`;
     }).join('');
   } catch (e) {
@@ -525,15 +567,25 @@ async function viewReveal(tokenId) {
 
 function showRevealModal(data) {
   const content = document.getElementById('reveal-content');
+  const iotHtml = data.iotReadings ? data.iotReadings.map(r =>
+    `<tr><td>${r.time}</td><td>${r.temp}</td><td>${r.humidity}</td><td>${r.soil}</td><td>${r.rain}</td></tr>`
+  ).join('') : '';
+
   content.innerHTML = `
+    <div style="margin-bottom:16px; padding:12px; background:#2e1a2e; border-radius:8px; border:1px solid #4a1a4a;">
+      <span style="color:#e879f9; font-weight:600;">PREVIOUSLY HIDDEN DATA — Now revealed to buyer</span>
+    </div>
     <div class="info-row"><span class="info-label">Variety</span><span class="info-value">${data.variety || 'N/A'}</span></div>
     <div class="info-row"><span class="info-label">Region</span><span class="info-value" style="color:#4ade80">${data.region || 'N/A'}</span></div>
     <div class="info-row"><span class="info-label">Altitude</span><span class="info-value" style="color:#4ade80">${data.altitude || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">GPS</span><span class="info-value" style="color:#4ade80">${data.gps ? data.gps.lat + ', ' + data.gps.lon : 'N/A'}</span></div>
     <div class="info-row"><span class="info-label">Cooperative</span><span class="info-value" style="color:#4ade80">${data.cooperativeName || 'N/A'}</span></div>
     <div class="info-row"><span class="info-label">Farmer Experience</span><span class="info-value" style="color:#4ade80">${data.farmerExperienceYears || 'N/A'} years</span></div>
     <div class="info-row"><span class="info-label">Fermentation</span><span class="info-value" style="color:#4ade80">${data.fermentationDays || 'N/A'} days</span></div>
     <div class="info-row"><span class="info-label">Drying</span><span class="info-value" style="color:#4ade80">${data.dryingMethod || 'N/A'}</span></div>
     <div class="info-row"><span class="info-label">Humidity</span><span class="info-value" style="color:#4ade80">${data.humidity || 'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Purchase Price</span><span class="info-value" style="color:#ef4444">${data.purchasePricePerKg || 'N/A'}/kg</span></div>
+    <div class="info-row"><span class="info-label">Production Cost</span><span class="info-value" style="color:#ef4444">${data.productionCostPerKg || 'N/A'}/kg</span></div>
     <div class="info-row"><span class="info-label">Certifications</span><span class="info-value" style="color:#4ade80">${Array.isArray(data.certifications) ? data.certifications.join(', ') : data.certifications || 'N/A'}</span></div>
     ${data.flavorProfile ? `
     <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2a2a;">
@@ -545,6 +597,20 @@ function showRevealModal(data) {
         <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.floral}</div><div style="color:#666; font-size:11px;">Floral</div></div>
         <div><div style="color:#d4a052; font-size:20px; font-weight:700;">${data.flavorProfile.body}</div><div style="color:#666; font-size:11px;">Body</div></div>
       </div>
+    </div>` : ''}
+    ${data.iotReadings && data.iotReadings.length > 0 ? `
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2a2a;">
+      <span class="info-label">IoT Sensor Data</span>
+      <table style="width:100%; margin-top:8px; font-size:12px; border-collapse:collapse;">
+        <tr style="color:#888;"><th style="text-align:left;padding:4px;">Time</th><th>Temp</th><th>Humidity</th><th>Soil</th><th>Rain</th></tr>
+        ${iotHtml}
+      </table>
+      <div style="margin-top:8px; font-size:11px; color:#666;">Data collected from on-farm IoT sensors — stored on Rayls Privacy Node</div>
+    </div>` : ''}
+    ${data.aiReason ? `
+    <div style="margin-top:16px; padding:12px; background:#0a0a0a; border-radius:8px; border:1px solid #2a2a2a;">
+      <span style="color:#888; font-size:12px; text-transform:uppercase;">AI Analysis</span>
+      <p style="margin-top:6px; font-size:13px; color:#ccc; line-height:1.5;">${data.aiReason}</p>
     </div>` : ''}
     <div style="margin-top:20px; padding:12px; background:#1a2e1a; border-radius:8px; border:1px solid #2d4a2d;">
       <span style="color:#4ade80; font-weight:600;">Provenance verified on Rayls Privacy Node</span><br>

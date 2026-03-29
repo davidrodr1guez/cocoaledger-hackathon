@@ -55,6 +55,148 @@ const ATTESTATION_ABI = [
 const lotMetadata = {};
 let nextTokenId = 10; // Start from 10 to avoid collision with test mints
 
+// ─── Demo data for slides/presentation ─────────────────────────────────
+if (process.env.DEMO_MODE === 'true') {
+  const demoLots = [
+    {
+      tokenId: 1,
+      variety: "Criollo Fino de Aroma",
+      weight: "500 kg",
+      harvest: "2026-Q1",
+      region: "Tumaco, Nariño",
+      altitude: "450 msnm",
+      cooperativeName: "CoopCacao Tumaco",
+      fermentationDays: 6,
+      dryingMethod: "Solar, 5 days",
+      humidity: "7.2%",
+      farmerExperienceYears: 8,
+      certifications: ["Organic", "Rainforest Alliance"],
+      flavorProfile: { acidity: 7.5, bitterness: 4.2, fruitiness: 8.1, floral: 6.8, body: 7.9 },
+      purchasePricePerKg: "$2.00",
+      productionCostPerKg: "$3.50",
+      iotReadings: [
+        { time: "06:00", temp: "23.5°C", humidity: "82%", soil: "65.5%", rain: "12.5mm" },
+        { time: "14:00", temp: "28.5°C", humidity: "75%", soil: "62.0%", rain: "0mm" },
+        { time: "20:00", temp: "21.5°C", humidity: "88%", soil: "68.0%", rain: "5mm" },
+      ],
+      gps: { lat: 1.782, lon: -78.89 },
+      status: "listed",
+      aiScore: 88,
+      aiGrade: "A",
+      aiBreakdown: { flavor: 92, processing: 88, iot: 85, farm: 82, disease: 90 },
+      aiClassification: "premium_fine_flavor",
+      aiOrigin: "VERIFIED",
+      aiPremium: "45-60%",
+      aiConfidence: 0.92,
+      aiReason: "Flavor profile consistent with Criollo from Pacific Colombia. High fruitiness (8.1) and moderate acidity (7.5) match Tumaco terroir. Fermentation and drying parameters within premium range. IoT data confirms stable microclimate.",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      tokenId: 2,
+      variety: "Trinitario",
+      weight: "300 kg",
+      harvest: "2026-Q1",
+      region: "San Vicente de Chucurí, Santander",
+      altitude: "680 msnm",
+      cooperativeName: "FedeCacao Santander",
+      fermentationDays: 5,
+      dryingMethod: "Solar, 4 days",
+      humidity: "7.8%",
+      farmerExperienceYears: 12,
+      certifications: ["Fair Trade", "UTZ"],
+      flavorProfile: { acidity: 6.2, bitterness: 5.5, fruitiness: 6.8, floral: 5.5, body: 8.2 },
+      purchasePricePerKg: "$1.80",
+      productionCostPerKg: "$3.20",
+      iotReadings: [
+        { time: "06:00", temp: "21.0°C", humidity: "78%", soil: "58.2%", rain: "8mm" },
+        { time: "14:00", temp: "26.5°C", humidity: "65%", soil: "52.0%", rain: "0mm" },
+        { time: "20:00", temp: "19.5°C", humidity: "85%", soil: "61.0%", rain: "3mm" },
+      ],
+      gps: { lat: 6.883, lon: -73.417 },
+      status: "attested",
+      aiScore: 79,
+      aiGrade: "B",
+      aiBreakdown: { flavor: 78, processing: 72, iot: 83, farm: 85, disease: 80 },
+      aiClassification: "fine_flavor",
+      aiOrigin: "VERIFIED",
+      aiPremium: "25-35%",
+      aiConfidence: 0.87,
+      aiReason: "Solid Trinitario with strong body (8.2). Santander profile confirmed by altitude and IoT temperature range. Good processing but fermentation slightly short for maximum flavor development.",
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+      tokenId: 3,
+      variety: "Criollo Fino de Aroma",
+      weight: "200 kg",
+      harvest: "2026-Q1",
+      region: "Arauca",
+      altitude: "120 msnm",
+      cooperativeName: "CacaoArauca",
+      fermentationDays: 2,
+      dryingMethod: "Mechanical, 1 day",
+      humidity: "12.5%",
+      farmerExperienceYears: 1,
+      certifications: [],
+      flavorProfile: { acidity: 3.0, bitterness: 8.5, fruitiness: 2.1, floral: 1.2, body: 4.0 },
+      purchasePricePerKg: "$0.90",
+      productionCostPerKg: "$1.50",
+      iotReadings: [
+        { time: "14:00", temp: "34.5°C", humidity: "45%", soil: "28.0%", rain: "0mm" },
+      ],
+      gps: { lat: 7.089, lon: -70.762 },
+      status: "rejected",
+      aiScore: 28,
+      aiGrade: "D",
+      aiBreakdown: { flavor: 15, processing: 20, iot: 30, farm: 25, disease: 45 },
+      aiClassification: "commodity",
+      aiOrigin: "SUSPICIOUS",
+      aiPremium: "0%",
+      aiConfidence: 0.94,
+      aiReason: "REJECTED. Declared as Criollo but flavor profile indicates Forastero (high bitterness 8.5, low fruitiness 2.1). Humidity 12.5% exceeds premium threshold. Only 1 IoT reading — insufficient monitoring. Mechanical drying degrades quality.",
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+    },
+    {
+      tokenId: 4,
+      variety: "Nacional",
+      weight: "750 kg",
+      harvest: "2026-Q1",
+      region: "Catatumbo, Norte de Santander",
+      altitude: "520 msnm",
+      cooperativeName: "CoopCacao Catatumbo",
+      fermentationDays: 7,
+      dryingMethod: "Solar, 6 days",
+      humidity: "6.8%",
+      farmerExperienceYears: 15,
+      certifications: ["Organic", "Rainforest Alliance", "Direct Trade"],
+      flavorProfile: { acidity: 7.8, bitterness: 3.8, fruitiness: 8.5, floral: 7.2, body: 8.0 },
+      purchasePricePerKg: "$2.50",
+      productionCostPerKg: "$4.00",
+      iotReadings: [
+        { time: "06:00", temp: "22.0°C", humidity: "80%", soil: "62.0%", rain: "15mm" },
+        { time: "10:00", temp: "25.0°C", humidity: "72%", soil: "59.0%", rain: "2mm" },
+        { time: "14:00", temp: "27.5°C", humidity: "68%", soil: "55.0%", rain: "0mm" },
+        { time: "18:00", temp: "23.0°C", humidity: "78%", soil: "60.0%", rain: "8mm" },
+        { time: "22:00", temp: "20.5°C", humidity: "86%", soil: "65.0%", rain: "4mm" },
+      ],
+      gps: { lat: 8.533, lon: -73.067 },
+      status: "revealed",
+      aiScore: 94,
+      aiGrade: "A",
+      aiBreakdown: { flavor: 97, processing: 95, iot: 92, farm: 90, disease: 88 },
+      aiClassification: "premium_fine_flavor",
+      aiOrigin: "VERIFIED",
+      aiPremium: "60-80%",
+      aiConfidence: 0.96,
+      aiReason: "Exceptional Nacional variety. Outstanding fruitiness (8.5) and floral notes (7.2) with low bitterness (3.8). 7-day fermentation and solar drying optimal. 5 IoT readings show ideal microclimate. 15 years farmer experience. Triple certified. Premium recommendation: top 5% of Colombian cacao.",
+      createdAt: new Date(Date.now() - 10800000).toISOString(),
+    },
+  ];
+
+  demoLots.forEach(lot => { lotMetadata[lot.tokenId] = lot; });
+  nextTokenId = 100;
+  console.log("  DEMO MODE: 4 sample lots loaded");
+}
+
 // ─── API Routes ────────────────────────────────────────────────────────
 
 // Health check
@@ -159,7 +301,7 @@ app.post('/api/lot/:tokenId/reveal', (req, res) => {
   });
 });
 
-// GET /api/lots — List all lots with their public status
+// GET /api/lots — List all lots with their public status + AI scores (no private data)
 app.get('/api/lots', (req, res) => {
   const lots = Object.values(lotMetadata).map((lot) => ({
     tokenId: lot.tokenId,
@@ -168,6 +310,15 @@ app.get('/api/lots', (req, res) => {
     status: lot.status,
     harvest: lot.harvest || 'N/A',
     createdAt: lot.createdAt,
+    iotReadings: lot.iotReadings ? lot.iotReadings.map(() => ({})) : [], // count only, no data
+    // AI results (public — scoring methodology is transparent)
+    aiScore: lot.aiScore,
+    aiGrade: lot.aiGrade,
+    aiBreakdown: lot.aiBreakdown,
+    aiClassification: lot.aiClassification,
+    aiOrigin: lot.aiOrigin,
+    aiPremium: lot.aiPremium,
+    aiConfidence: lot.aiConfidence,
   }));
   res.json(lots);
 });
