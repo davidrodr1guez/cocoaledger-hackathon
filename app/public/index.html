@@ -1295,7 +1295,7 @@ function renderCard(lot) {
   }
 
   return `
-    <div class="card">
+    <div class="card lot-card">
       <div class="card-img-wrap">
         <img class="card-img" src="${img}" alt="${lot.variety || 'Cacao'}" loading="lazy"
           onerror="this.style.display='none'" />
@@ -1365,50 +1365,81 @@ function renderCard(lot) {
 async function buyAndReveal(tokenId, btnElement) {
   const buyerAddr = connectedAddress || '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d';
   const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = 'Processing...'; }
 
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  // Create log panel below the card
+  const card = btn ? btn.closest('.lot-card') : null;
+  let logPanel = document.getElementById(`log-${tokenId}`);
+  if (!logPanel && card) {
+    logPanel = document.createElement('div');
+    logPanel.id = `log-${tokenId}`;
+    logPanel.style.cssText = 'margin-top:8px;background:#0a0a0a;border:1px solid #2a2118;border-radius:8px;padding:10px;font-family:"JetBrains Mono",monospace;font-size:10px;line-height:1.8;max-height:180px;overflow-y:auto;';
+    card.appendChild(logPanel);
+  }
 
-  // Step progress animation
-  const steps = [
-    'Minting NFT on Privacy Node...',
-    'Bridging to Public Chain...',
-    'Waiting for relayer...',
-    'Finalizing purchase...'
-  ];
-  let stepIdx = 0;
-  if (btn) btn.textContent = steps[0];
-  const progressInterval = setInterval(() => {
-    stepIdx++;
-    if (stepIdx < steps.length && btn) btn.textContent = steps[stepIdx];
-  }, 3000);
+  const addLog = (type, msg, link) => {
+    if (!logPanel) return;
+    const time = new Date().toLocaleTimeString();
+    const colors = { log: '#a89880', success: '#5cb87a', warn: '#f59e0b', error: '#ef4444' };
+    const color = colors[type] || '#a89880';
+    const linkHtml = link ? ` <a href="${link}" target="_blank" style="color:#60a5fa;text-decoration:none;">View TX ↗</a>` : '';
+    logPanel.innerHTML += `<div style="color:${color}">[${time}] ${type === 'success' ? '✅' : type === 'warn' ? '⚠️' : type === 'error' ? '❌' : '⏳'} ${msg}${linkHtml}</div>`;
+    logPanel.scrollTop = logPanel.scrollHeight;
+  };
 
   try {
-    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/purchase`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ buyerAddress: buyerAddr }),
-    });
-    const data = await res.json();
-    clearInterval(progressInterval);
+    const evtSource = new EventSource(`${API}/api/cacao-market/lot/${tokenId}/purchase-stream?buyer=${buyerAddr}`);
+    let purchaseData = null;
 
-    if (data.success) {
-      if (btn) {
-        btn.textContent = 'NFT Minted!';
-        btn.style.background = '#5cb87a';
-        btn.style.color = '#000';
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'log') {
+        addLog('log', data.message);
+        if (btn) btn.textContent = data.message.slice(0, 30) + '...';
+      } else if (data.type === 'success') {
+        addLog('success', data.message, data.explorer);
+      } else if (data.type === 'warn') {
+        addLog('warn', data.message);
+      } else if (data.type === 'error') {
+        addLog('error', data.message);
+        evtSource.close();
+        if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
+      } else if (data.type === 'complete') {
+        purchaseData = data;
+        addLog('success', `Purchase complete — NFT #${data.nftTokenId}`);
+        if (data.mintExplorer) {
+          addLog('log', `Mint TX: ${data.mintTxHash}`, data.mintExplorer);
+        }
+        if (data.bridgeExplorer) {
+          addLog('log', `Bridge TX: ${data.bridgeTxHash}`, data.bridgeExplorer);
+        }
+        evtSource.close();
+
+        if (btn) {
+          btn.textContent = 'NFT Minted!';
+          btn.style.background = '#5cb87a';
+          btn.style.color = '#000';
+        }
+
+        setTimeout(() => {
+          showRevealModal(data.fullMetadata || data, data);
+          loadLots();
+        }, 1500);
       }
-      setTimeout(() => {
-        showRevealModal(data.fullMetadata || data, data);
-        loadLots();
-      }, 600);
-    } else {
-      alert('Purchase failed: ' + (data.error || 'Unknown'));
-      if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
-    }
+    };
+
+    evtSource.onerror = () => {
+      evtSource.close();
+      if (!purchaseData) {
+        addLog('error', 'Connection lost');
+        if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
+      }
+    };
+
   } catch (e) {
-    clearInterval(progressInterval);
     console.error('[purchase] Error:', e);
-    alert('Purchase error: ' + e.message);
+    addLog('error', e.message);
     if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
