@@ -342,7 +342,126 @@ app.get('/api/cacao-market/lot/:tokenId', (req, res) => {
   return res.json({ tokenId, status: 'revealed', ...lot });
 });
 
-// POST /api/cacao-market/lot/:tokenId/purchase — Purchase lot: mint NFT + reveal
+// POST /api/cacao-market/lot/:tokenId/prepare — Server-side: mint NFT, bridge, list on marketplace
+app.post('/api/cacao-market/lot/:tokenId/prepare', async (req, res) => {
+  const tokenId = parseInt(req.params.tokenId);
+  const lot = lotMetadata[tokenId];
+
+  if (!lot) {
+    return res.status(404).json({ error: 'Lot not found' });
+  }
+
+  let nftTokenId = Date.now() % 100000;
+  let mintTxHash = null;
+  let bridgeTxHash = null;
+  let listingId = null;
+  const price = req.body.price || '1000000000000000'; // 0.001 USDR default
+
+  try {
+    // 1. Mint NFT on Privacy Node
+    const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
+    const mintTx = await nft.mint(MINT_RECIPIENT, nftTokenId);
+    await mintTx.wait();
+    mintTxHash = mintTx.hash;
+    console.log(`🎨 NFT #${nftTokenId} minted on Privacy Node — tx: ${mintTxHash}`);
+
+    // 2. Bridge NFT to public chain (to our public address, not buyer)
+    const nftReg = new ethers.Contract(NFT_ADDRESS, NFT_ABI, registeredWallet);
+    const bridgeTx = await nftReg.teleportToPublicChain(TRANSFER_TO, nftTokenId, PUBLIC_CHAIN_ID);
+    await bridgeTx.wait();
+    bridgeTxHash = bridgeTx.hash;
+    console.log(`🌉 NFT #${nftTokenId} bridged to public chain — tx: ${bridgeTxHash}`);
+
+    // 3. Wait for mirror to process, then approve + list on marketplace
+    if (publicWallet) {
+      console.log(`⏳ Waiting 15s for relayer to process bridge...`);
+      await new Promise(r => setTimeout(r, 15000));
+
+      const NFT_MIRROR = NFT_MIRROR_ADDRESS;
+      const MARKETPLACE = process.env.MARKETPLACE_ADDRESS;
+
+      if (NFT_MIRROR && MARKETPLACE) {
+        const ERC721_PUBLIC = [
+          'function approve(address to, uint256 tokenId)',
+          'function ownerOf(uint256 tokenId) view returns (address)',
+        ];
+
+        try {
+          const mirrorNft = new ethers.Contract(NFT_MIRROR, ERC721_PUBLIC, publicWallet);
+
+          // Check if we own the NFT on public chain
+          const owner = await mirrorNft.ownerOf(nftTokenId);
+          console.log(`📋 NFT #${nftTokenId} owner on public chain: ${owner}`);
+
+          // Approve marketplace
+          const approveTx = await mirrorNft.approve(MARKETPLACE, nftTokenId, { gasLimit: 100000, type: 0 });
+          await approveTx.wait();
+          console.log(`✅ Approved marketplace for NFT #${nftTokenId}`);
+
+          // List on marketplace (assetType=1 for ERC721, price in wei)
+          const marketplace = new ethers.Contract(MARKETPLACE, [
+            'function list(address token, uint8 assetType, uint256 tokenId, uint256 amount, uint256 price) returns (uint256)',
+            'function nextListingId() view returns (uint256)',
+          ], publicWallet);
+
+          const listTx = await marketplace.list(NFT_MIRROR, 1, nftTokenId, 1, price, { gasLimit: 300000, type: 0 });
+          await listTx.wait();
+          listingId = Number(await marketplace.nextListingId()) - 1;
+          console.log(`🏪 Listed on marketplace — listing #${listingId}`);
+        } catch (listErr) {
+          console.log(`⚠️ Marketplace listing skipped: ${listErr.message?.slice(0, 100)}`);
+        }
+      }
+    }
+
+    lot.status = 'listed';
+    lot.nftTokenId = nftTokenId;
+    lot.listingId = listingId;
+
+    res.json({
+      success: true,
+      tokenId,
+      nftTokenId,
+      mintTxHash,
+      bridgeTxHash,
+      listingId,
+      nftMirrorAddress: NFT_MIRROR_ADDRESS,
+      marketplaceAddress: process.env.MARKETPLACE_ADDRESS,
+      price,
+      message: `Lot #${tokenId} prepared: NFT #${nftTokenId} minted, bridged, and listed.`,
+    });
+  } catch (e) {
+    console.error('Prepare error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/cacao-market/lot/:tokenId/confirm-purchase — After buyer signs on-chain buy()
+app.post('/api/cacao-market/lot/:tokenId/confirm-purchase', (req, res) => {
+  const tokenId = parseInt(req.params.tokenId);
+  const lot = lotMetadata[tokenId];
+
+  if (!lot) {
+    return res.status(404).json({ error: 'Lot not found' });
+  }
+
+  lot.status = 'revealed';
+  lot.purchasedAt = new Date().toISOString();
+  lot.buyerAddress = req.body.buyerAddress || 'unknown';
+  lot.buyTxHash = req.body.txHash || null;
+
+  console.log(`🔓 Lot #${tokenId} PURCHASED & REVEALED — buyer: ${lot.buyerAddress}`);
+
+  res.json({
+    success: true,
+    tokenId,
+    status: 'revealed',
+    message: 'Purchase confirmed. Full provenance revealed.',
+    fullMetadata: lot,
+  });
+});
+
+// POST /api/cacao-market/lot/:tokenId/purchase — Quick purchase (no wallet signing, backward compat)
 app.post('/api/cacao-market/lot/:tokenId/purchase', async (req, res) => {
   const tokenId = parseInt(req.params.tokenId);
   const lot = lotMetadata[tokenId];
@@ -352,43 +471,30 @@ app.post('/api/cacao-market/lot/:tokenId/purchase', async (req, res) => {
   }
 
   const buyerAddress = req.body.buyerAddress || TRANSFER_TO;
-  let nftTokenId = tokenId;
+  let nftTokenId = Date.now() % 100000;
   let mintTxHash = null;
   let bridgeTxHash = null;
 
-  // 1. Mint NFT on Privacy Node
   try {
     const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
     const mintTx = await nft.mint(MINT_RECIPIENT, nftTokenId);
-    const mintReceipt = await mintTx.wait();
+    await mintTx.wait();
     mintTxHash = mintTx.hash;
-    console.log(`🎨 NFT #${nftTokenId} minted on Privacy Node — tx: ${mintTxHash}`);
+    console.log(`🎨 NFT #${nftTokenId} minted — tx: ${mintTxHash}`);
   } catch (e) {
-    // Token ID might already exist, try with a new one
-    nftTokenId = Date.now() % 100000;
-    try {
-      const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
-      const mintTx = await nft.mint(MINT_RECIPIENT, nftTokenId);
-      await mintTx.wait();
-      mintTxHash = mintTx.hash;
-      console.log(`🎨 NFT #${nftTokenId} minted on Privacy Node — tx: ${mintTxHash}`);
-    } catch (e2) {
-      console.log(`⚠️ NFT mint skipped: ${e2.message?.slice(0, 80)}`);
-    }
+    console.log(`⚠️ NFT mint: ${e.message?.slice(0, 80)}`);
   }
 
-  // 2. Bridge NFT to public chain
   try {
-    const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, registeredWallet);
-    const bridgeTx = await nft.teleportToPublicChain(buyerAddress, nftTokenId, PUBLIC_CHAIN_ID);
+    const nftReg = new ethers.Contract(NFT_ADDRESS, NFT_ABI, registeredWallet);
+    const bridgeTx = await nftReg.teleportToPublicChain(buyerAddress, nftTokenId, PUBLIC_CHAIN_ID);
     await bridgeTx.wait();
     bridgeTxHash = bridgeTx.hash;
-    console.log(`🌉 NFT #${nftTokenId} bridged to public chain — tx: ${bridgeTxHash}`);
+    console.log(`🌉 NFT #${nftTokenId} bridged — tx: ${bridgeTxHash}`);
   } catch (e) {
-    console.log(`⚠️ Bridge skipped: ${e.message?.slice(0, 80)}`);
+    console.log(`⚠️ Bridge: ${e.message?.slice(0, 80)}`);
   }
 
-  // 3. Update lot status to revealed
   lot.status = 'revealed';
   lot.nftTokenId = nftTokenId;
   lot.purchasedAt = new Date().toISOString();
@@ -397,13 +503,8 @@ app.post('/api/cacao-market/lot/:tokenId/purchase', async (req, res) => {
   console.log(`🔓 Lot #${tokenId} PURCHASED & REVEALED — NFT #${nftTokenId}`);
 
   res.json({
-    success: true,
-    tokenId,
-    nftTokenId,
-    status: 'revealed',
-    mintTxHash,
-    bridgeTxHash,
-    nftExplorer: `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}`,
+    success: true, tokenId, nftTokenId, status: 'revealed',
+    mintTxHash, bridgeTxHash,
     message: `Lot #${tokenId} purchased! NFT #${nftTokenId} minted and bridged.`,
     fullMetadata: lot,
   });

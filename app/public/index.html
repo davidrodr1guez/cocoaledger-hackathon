@@ -1149,6 +1149,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
 <script>
 const API = '';
 let connectedAddress = null;
@@ -1362,47 +1363,105 @@ function renderCard(lot) {
 
 /* ===== PURCHASE / REVEAL ===== */
 async function buyAndReveal(tokenId, btnElement) {
-  const buyerAddr = connectedAddress || '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d';
-
-  // Find the button
-  const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
-  if (btn) {
-    btn.textContent = 'Minting NFT...';
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
+  if (!connectedAddress) {
+    alert('Please connect your wallet first.');
+    await connectWallet();
+    if (!connectedAddress) return;
   }
 
-  try {
-    console.log('[purchase] Starting purchase for lot', tokenId, 'buyer:', buyerAddr);
+  const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
+  const updateBtn = (text, color) => {
+    if (btn) { btn.textContent = text; if (color) { btn.style.background = color; btn.style.color = '#000'; } }
+  };
 
-    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/purchase`, {
+  updateBtn('Preparing NFT...');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  try {
+    // Step 1: Server mints NFT, bridges, lists on marketplace
+    console.log('[purchase] Step 1: Preparing lot', tokenId);
+    updateBtn('Minting NFT...');
+
+    const prepRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/prepare`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ buyerAddress: buyerAddr }),
+      body: JSON.stringify({ price: '1000000000000000' }), // 0.001 USDR
     });
+    const prepData = await prepRes.json();
+    console.log('[purchase] Prepared:', prepData);
 
-    console.log('[purchase] Response status:', res.status);
-    const data = await res.json();
-    console.log('[purchase] Response data:', data);
+    if (!prepData.success) {
+      alert('Preparation failed: ' + (prepData.error || 'Unknown'));
+      updateBtn('Purchase Harvest Lot');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
 
-    if (data.success) {
-      if (btn) {
-        btn.textContent = 'NFT Minted!';
-        btn.style.background = '#5cb87a';
-        btn.style.color = '#000';
-      }
+    // Step 2: Buyer signs buy() on Marketplace.sol via MetaMask
+    if (prepData.listingId !== null && prepData.marketplaceAddress && window.ethereum) {
+      updateBtn('Sign in MetaMask...');
+      console.log('[purchase] Step 2: Requesting MetaMask signature for listing', prepData.listingId);
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const marketplace = new ethers.Contract(prepData.marketplaceAddress, [
+        'function buy(uint256 listingId) payable',
+      ], signer);
+
+      updateBtn('Confirm purchase...');
+      const buyTx = await marketplace.buy(prepData.listingId, {
+        value: prepData.price,
+        gasLimit: 200000,
+      });
+
+      updateBtn('Confirming on-chain...');
+      const receipt = await buyTx.wait();
+      console.log('[purchase] Buy tx confirmed:', receipt.hash);
+
+      // Step 3: Confirm purchase on backend to reveal data
+      const confirmRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/confirm-purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ buyerAddress: connectedAddress, txHash: receipt.hash }),
+      });
+      const confirmData = await confirmRes.json();
+
+      updateBtn('NFT Purchased!', '#5cb87a');
       setTimeout(() => {
-        showRevealModal(data.fullMetadata || data, data);
+        showRevealModal(confirmData.fullMetadata || confirmData, {
+          ...prepData,
+          buyTxHash: receipt.hash,
+        });
         loadLots();
       }, 800);
+
     } else {
-      alert('Purchase failed: ' + (data.error || 'Unknown error'));
-      if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
+      // Fallback: no marketplace listing — just reveal directly
+      console.log('[purchase] No marketplace listing, revealing directly');
+      const confirmRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/confirm-purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ buyerAddress: connectedAddress }),
+      });
+      const confirmData = await confirmRes.json();
+
+      updateBtn('NFT Minted!', '#5cb87a');
+      setTimeout(() => {
+        showRevealModal(confirmData.fullMetadata || confirmData, prepData);
+        loadLots();
+      }, 800);
     }
+
   } catch (e) {
     console.error('[purchase] Error:', e);
-    alert('Purchase error: ' + e.message);
-    if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
+    if (e.code === 4001 || e.code === 'ACTION_REJECTED') {
+      alert('Transaction rejected by user.');
+    } else {
+      alert('Purchase error: ' + e.message);
+    }
+    updateBtn('Purchase Harvest Lot');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
 
