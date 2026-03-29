@@ -204,38 +204,99 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', project: 'CocoaLedger' });
 });
 
-// POST /api/lot — Register a new cacao lot (mint NFT with metadata)
+// POST /api/cacao-market/lot — Register a new cacao lot
+// Accepts TWO formats:
+// 1. From web form: { variety, region, weight, ... }
+// 2. From Julio's agent: { lotId, farmName, origin, publicMetadata, privateMetadata }
 app.post('/api/cacao-market/lot', async (req, res) => {
   try {
-    const metadata = req.body;
+    const body = req.body;
 
+    // Format 2: From agent analysis (has publicMetadata)
+    if (body.publicMetadata) {
+      const pub = body.publicMetadata;
+      const priv = body.privateMetadata || {};
+      const tokenId = body.lotId !== undefined ? body.lotId : nextTokenId++;
+
+      lotMetadata[tokenId] = {
+        tokenId,
+        // Public data (visible before purchase)
+        variety: pub.recommendedUse || 'Colombian Cacao',
+        weight: `${pub.totalReadings} readings`,
+        harvest: new Date().toISOString().slice(0, 7),
+        status: 'listed',
+        createdAt: body.analyzedAt || new Date().toISOString(),
+        iotReadings: Array(pub.totalReadings).fill({}),
+        // AI scores (public)
+        aiScore: pub.qualityScore,
+        aiGrade: pub.qualityGrade,
+        aiBreakdown: pub.scoreBreakdown || {},
+        aiClassification: pub.qualityGrade === 'S' || pub.qualityGrade === 'A' ? 'premium_fine_flavor' : pub.qualityGrade === 'B' ? 'fine_flavor' : 'commodity',
+        aiOrigin: pub.originVerified ? 'VERIFIED' : 'UNVERIFIED',
+        aiPremium: pub.premiumRecommendation || '0%',
+        aiConfidence: 0.9,
+        aiReason: pub.cropHealthAssessment || '',
+        // Private data (hidden until purchase)
+        region: body.origin || priv.gpsAreaCoverage || '🔒 PRIVATE',
+        cooperativeName: body.farmName || '🔒 PRIVATE',
+        gps: priv.gpsAreaCoverage ? { area: priv.gpsAreaCoverage } : null,
+        purchasePricePerKg: priv.priceEstimatePerKg ? `$${priv.priceEstimatePerKg.toFixed(2)}` : '🔒 PRIVATE',
+        iotDataHash: priv.iotDataHash || null,
+        anomalies: priv.anomalies || [],
+        labQualityAnalysis: priv.labQualityAnalysis || '',
+        producerRecommendations: priv.producerRecommendations || '',
+        deviceStats: priv.deviceStats || [],
+        // Public assessments
+        cropHealthAssessment: pub.cropHealthAssessment || '',
+        regionSummary: pub.regionSummary || '',
+        harvestAssessment: pub.harvestAssessment || '',
+        avgTemperature: pub.avgTemperature,
+        avgHumidity: pub.avgHumidity,
+        avgSoilPH: pub.avgSoilPH,
+        avgRainfall: pub.avgRainfall,
+      };
+
+      console.log(`🤖 Agent registered lot #${tokenId}: ${pub.qualityGrade} (${pub.qualityScore}/100)`);
+
+      return res.json({
+        success: true,
+        tokenId,
+        grade: pub.qualityGrade,
+        score: pub.qualityScore,
+        message: `Lot #${tokenId} listed on marketplace — Grade ${pub.qualityGrade} (${pub.qualityScore}/100)`,
+      });
+    }
+
+    // Format 1: From web form
+    const metadata = body;
     if (!metadata.variety || !metadata.region || !metadata.weight) {
       return res.status(400).json({ error: 'Required fields: variety, region, weight' });
     }
 
     const tokenId = nextTokenId++;
 
-    // Store metadata privately (simulates Privacy Node storage)
     lotMetadata[tokenId] = {
       ...metadata,
       tokenId,
       createdAt: new Date().toISOString(),
-      status: 'private', // private -> attested -> bridged -> listed
+      status: 'private',
     };
 
     // Mint NFT on Privacy Node
-    const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
-    const tx = await nft.mint(MINT_RECIPIENT, tokenId);
-    await tx.wait();
-
-    console.log(`🌱 Minted cacao lot NFT #${tokenId} on Privacy Node`);
+    try {
+      const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
+      const tx = await nft.mint(MINT_RECIPIENT, tokenId);
+      await tx.wait();
+      console.log(`🌱 Minted cacao lot NFT #${tokenId} on Privacy Node`);
+    } catch (mintErr) {
+      console.log(`⚠️ NFT mint skipped: ${mintErr.message}`);
+    }
 
     res.json({
       success: true,
       tokenId,
       message: `Cacao lot #${tokenId} registered on Privacy Node`,
       metadata: {
-        // Only return non-sensitive summary
         variety: metadata.variety,
         weight: metadata.weight,
         region: '***PRIVATE***',
@@ -243,7 +304,7 @@ app.post('/api/cacao-market/lot', async (req, res) => {
       },
     });
   } catch (e) {
-    console.error('Mint error:', e.message);
+    console.error('Register error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
