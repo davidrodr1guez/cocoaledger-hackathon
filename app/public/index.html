@@ -143,6 +143,26 @@
       0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(92, 184, 122, 0.4); }
       50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(92, 184, 122, 0); }
     }
+    .wallet-btn {
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: opacity 0.2s;
+    }
+    .wallet-btn:hover { opacity: 0.85; }
+    .wallet-btn.connected {
+      background: var(--bg-elevated);
+      color: var(--gold-light);
+      border: 1px solid var(--border-gold);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
     .network-label {
       font-size: 10px;
       color: var(--text-dim);
@@ -944,6 +964,7 @@
       <span class="chain-dot"></span>
       On-Chain
     </div>
+    <button id="wallet-btn" class="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
   </div>
 </header>
 
@@ -1130,6 +1151,78 @@
 
 <script>
 const API = '';
+let connectedAddress = null;
+
+// ===== WALLET CONNECT =====
+async function connectWallet() {
+  const btn = document.getElementById('wallet-btn');
+
+  if (connectedAddress) {
+    // Already connected — disconnect
+    connectedAddress = null;
+    btn.textContent = 'Connect Wallet';
+    btn.classList.remove('connected');
+    return;
+  }
+
+  if (!window.ethereum) {
+    alert('MetaMask not found. Please install MetaMask to connect your wallet.');
+    return;
+  }
+
+  try {
+    btn.textContent = 'Connecting...';
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    connectedAddress = accounts[0];
+
+    // Try to switch to Rayls Testnet
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + (7295799).toString(16) }],
+      });
+    } catch (switchErr) {
+      // Chain not added — add it
+      if (switchErr.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + (7295799).toString(16),
+            chainName: 'Rayls Testnet',
+            rpcUrls: ['https://testnet-rpc.rayls.com/'],
+            nativeCurrency: { name: 'USDR', symbol: 'USDR', decimals: 18 },
+            blockExplorerUrls: ['https://testnet-explorer.rayls.com/'],
+          }],
+        });
+      }
+    }
+
+    const short = connectedAddress.slice(0, 6) + '...' + connectedAddress.slice(-4);
+    btn.textContent = short;
+    btn.classList.add('connected');
+    console.log('Wallet connected:', connectedAddress);
+  } catch (err) {
+    console.error('Wallet connect failed:', err);
+    btn.textContent = 'Connect Wallet';
+  }
+}
+
+// Listen for account changes
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', (accounts) => {
+    const btn = document.getElementById('wallet-btn');
+    if (accounts.length === 0) {
+      connectedAddress = null;
+      btn.textContent = 'Connect Wallet';
+      btn.classList.remove('connected');
+    } else {
+      connectedAddress = accounts[0];
+      const short = connectedAddress.slice(0, 6) + '...' + connectedAddress.slice(-4);
+      btn.textContent = short;
+      btn.classList.add('connected');
+    }
+  });
+}
 
 /* ===== IMAGE MAP ===== */
 const LOT_IMAGES = {
@@ -1189,7 +1282,7 @@ function renderCard(lot) {
 
   let btnHtml = '';
   if (lot.status === 'listed') {
-    btnHtml = `<button class="btn btn-purchase" onclick="buyAndReveal(${lot.tokenId})">Purchase Harvest Lot</button>`;
+    btnHtml = `<button class="btn btn-purchase" data-buy="${lot.tokenId}" onclick="buyAndReveal(${lot.tokenId}, this)">Purchase Harvest Lot</button>`;
   } else if (lot.status === 'revealed') {
     btnHtml = `<button class="btn btn-view" onclick="viewReveal(${lot.tokenId})">View Full Supply Chain Data</button>`;
   } else if (lot.status === 'rejected') {
@@ -1268,28 +1361,48 @@ function renderCard(lot) {
 }
 
 /* ===== PURCHASE / REVEAL ===== */
-async function buyAndReveal(tokenId) {
-  const btn = event.target;
-  btn.textContent = 'Minting NFT...';
-  btn.disabled = true;
+async function buyAndReveal(tokenId, btnElement) {
+  const buyerAddr = connectedAddress || '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d';
+
+  // Find the button
+  const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
+  if (btn) {
+    btn.textContent = 'Minting NFT...';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+  }
+
   try {
+    console.log('[purchase] Starting purchase for lot', tokenId, 'buyer:', buyerAddr);
+
     const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ buyerAddress: '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d' }),
+      body: JSON.stringify({ buyerAddress: buyerAddr }),
     });
+
+    console.log('[purchase] Response status:', res.status);
     const data = await res.json();
+    console.log('[purchase] Response data:', data);
+
     if (data.success) {
-      showRevealModal(data.fullMetadata || data, data);
+      if (btn) {
+        btn.textContent = 'NFT Minted!';
+        btn.style.background = '#5cb87a';
+        btn.style.color = '#000';
+      }
+      setTimeout(() => {
+        showRevealModal(data.fullMetadata || data, data);
+        loadLots();
+      }, 800);
     } else {
       alert('Purchase failed: ' + (data.error || 'Unknown error'));
+      if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
     }
-    loadLots();
   } catch (e) {
-    alert('Error: ' + e.message);
-  } finally {
-    btn.textContent = 'Purchase Harvest Lot';
-    btn.disabled = false;
+    console.error('[purchase] Error:', e);
+    alert('Purchase error: ' + e.message);
+    if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
 
