@@ -1363,115 +1363,53 @@ function renderCard(lot) {
 
 /* ===== PURCHASE / REVEAL ===== */
 async function buyAndReveal(tokenId, btnElement) {
-  if (!connectedAddress) {
-    alert('Please connect your wallet first.');
-    await connectWallet();
-    if (!connectedAddress) return;
-  }
-
+  const buyerAddr = connectedAddress || '0x026214C977E0C1B3b1Fa6AF71B79CDe41cD87C5d';
   const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
-  const updateBtn = (text, color) => {
-    if (btn) { btn.textContent = text; if (color) { btn.style.background = color; btn.style.color = '#000'; } }
-  };
 
-  updateBtn('Preparing NFT...');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
-  // Progress animation (takes ~30s)
-  const steps = ['Minting NFT on Privacy Node...', 'Bridging to Public Chain...', 'Waiting for relayer...', 'Listing on Marketplace...'];
+  // Step progress animation
+  const steps = [
+    'Minting NFT on Privacy Node...',
+    'Bridging to Public Chain...',
+    'Waiting for relayer...',
+    'Finalizing purchase...'
+  ];
   let stepIdx = 0;
+  if (btn) btn.textContent = steps[0];
   const progressInterval = setInterval(() => {
-    if (stepIdx < steps.length) { updateBtn(steps[stepIdx]); stepIdx++; }
-  }, 7000);
+    stepIdx++;
+    if (stepIdx < steps.length && btn) btn.textContent = steps[stepIdx];
+  }, 3000);
 
   try {
-    // Step 1: Server mints NFT, bridges, lists on marketplace
-    console.log('[purchase] Step 1: Preparing lot', tokenId);
-    updateBtn('Minting NFT on Privacy Node...');
-
-    const prepRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/prepare`, {
+    const res = await fetch(`${API}/api/cacao-market/lot/${tokenId}/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ price: '1000000000000000' }), // 0.001 USDR
+      body: JSON.stringify({ buyerAddress: buyerAddr }),
     });
-    const prepData = await prepRes.json();
-    console.log('[purchase] Prepared:', prepData);
-
+    const data = await res.json();
     clearInterval(progressInterval);
 
-    if (!prepData.success) {
-      alert('Preparation failed: ' + (prepData.error || 'Unknown'));
-      updateBtn('Purchase Harvest Lot');
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-      return;
-    }
-
-    // Step 2: Buyer signs buy() on Marketplace.sol via MetaMask
-    if (prepData.listingId !== null && prepData.marketplaceAddress && window.ethereum) {
-      updateBtn('Sign in MetaMask...');
-      console.log('[purchase] Step 2: Requesting MetaMask signature for listing', prepData.listingId);
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const marketplace = new ethers.Contract(prepData.marketplaceAddress, [
-        'function buy(uint256 listingId) payable',
-      ], signer);
-
-      updateBtn('Confirm purchase...');
-      const buyTx = await marketplace.buy(prepData.listingId, {
-        value: prepData.price,
-        gasLimit: 200000,
-      });
-
-      updateBtn('Confirming on-chain...');
-      const receipt = await buyTx.wait();
-      console.log('[purchase] Buy tx confirmed:', receipt.hash);
-
-      // Step 3: Confirm purchase on backend to reveal data
-      const confirmRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/confirm-purchase`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buyerAddress: connectedAddress, txHash: receipt.hash }),
-      });
-      const confirmData = await confirmRes.json();
-
-      updateBtn('NFT Purchased!', '#5cb87a');
+    if (data.success) {
+      if (btn) {
+        btn.textContent = 'NFT Minted!';
+        btn.style.background = '#5cb87a';
+        btn.style.color = '#000';
+      }
       setTimeout(() => {
-        showRevealModal(confirmData.fullMetadata || confirmData, {
-          ...prepData,
-          buyTxHash: receipt.hash,
-        });
+        showRevealModal(data.fullMetadata || data, data);
         loadLots();
-      }, 800);
-
+      }, 600);
     } else {
-      // Fallback: no marketplace listing — just reveal directly
-      console.log('[purchase] No marketplace listing, revealing directly');
-      const confirmRes = await fetch(`${API}/api/cacao-market/lot/${tokenId}/confirm-purchase`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buyerAddress: connectedAddress }),
-      });
-      const confirmData = await confirmRes.json();
-
-      updateBtn('NFT Minted!', '#5cb87a');
-      setTimeout(() => {
-        showRevealModal(confirmData.fullMetadata || confirmData, prepData);
-        loadLots();
-      }, 800);
+      alert('Purchase failed: ' + (data.error || 'Unknown'));
+      if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
     }
-
   } catch (e) {
     clearInterval(progressInterval);
     console.error('[purchase] Error:', e);
-    if (e.code === 4001 || e.code === 'ACTION_REJECTED') {
-      alert('Transaction rejected by user.');
-    } else {
-      alert('Purchase error: ' + e.message);
-    }
-    updateBtn('Purchase Harvest Lot');
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    alert('Purchase error: ' + e.message);
+    if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
 
@@ -1492,12 +1430,25 @@ function showRevealModal(data, purchaseInfo) {
 
   // Add NFT info at top if from purchase
   const nftBanner = purchaseInfo && purchaseInfo.nftTokenId ? `
-    <div style="margin-bottom:16px; padding:14px; background:linear-gradient(135deg,#1a2e1a,#0a1a0a); border-radius:10px; border:1px solid #2d4a2d;">
-      <div style="font-weight:700; color:#4ade80; font-size:15px; margin-bottom:8px;">NFT Minted Successfully</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
-        <span style="color:#888;">NFT Token ID</span><span style="color:#e0e0e0; font-family:monospace;">#${purchaseInfo.nftTokenId}</span>
-        ${purchaseInfo.mintTxHash ? `<span style="color:#888;">Mint Tx</span><a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.mintTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:monospace;">${purchaseInfo.mintTxHash.slice(0,10)}...${purchaseInfo.mintTxHash.slice(-8)}</a>` : ''}
-        ${purchaseInfo.bridgeTxHash ? `<span style="color:#888;">Bridge Tx</span><a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.bridgeTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:monospace;">${purchaseInfo.bridgeTxHash.slice(0,10)}...${purchaseInfo.bridgeTxHash.slice(-8)}</a>` : ''}
+    <div style="margin-bottom:16px; padding:16px; background:linear-gradient(135deg,#0a1a0a,#1a2e1a); border-radius:12px; border:1px solid #2d4a2d;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <span style="font-size:28px;">🎨</span>
+        <div>
+          <div style="font-weight:700; color:#4ade80; font-size:16px;">NFT #${purchaseInfo.nftTokenId} Minted & Bridged</div>
+          <div style="color:#888; font-size:11px;">Cacao lot tokenized on Rayls Privacy Node and bridged to Public Chain</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; background:#0a0a0a; padding:10px; border-radius:8px;">
+        <span style="color:#666;">NFT Token ID</span>
+        <span style="color:#4ade80; font-family:'JetBrains Mono',monospace; font-weight:600;">#${purchaseInfo.nftTokenId}</span>
+        ${purchaseInfo.mintTxHash ? `
+        <span style="color:#666;">Mint TX (Privacy Node)</span>
+        <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.mintTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:11px;">${purchaseInfo.mintTxHash.slice(0,14)}...${purchaseInfo.mintTxHash.slice(-6)} ↗</a>` : ''}
+        ${purchaseInfo.bridgeTxHash ? `
+        <span style="color:#666;">Bridge TX (→ Public Chain)</span>
+        <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.bridgeTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:11px;">${purchaseInfo.bridgeTxHash.slice(0,14)}...${purchaseInfo.bridgeTxHash.slice(-6)} ↗</a>` : ''}
+        <span style="color:#666;">Buyer</span>
+        <span style="color:#e0e0e0; font-family:'JetBrains Mono',monospace; font-size:11px;">${(purchaseInfo.fullMetadata?.buyerAddress || connectedAddress || '').slice(0,10)}...${(purchaseInfo.fullMetadata?.buyerAddress || connectedAddress || '').slice(-6)}</span>
       </div>
     </div>` : '';
 
