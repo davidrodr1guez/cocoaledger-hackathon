@@ -163,6 +163,11 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
     }
+    .wallet-btn.connected:hover {
+      background: #2a1a1a;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
     .network-label {
       font-size: 10px;
       color: var(--text-dim);
@@ -1181,10 +1186,11 @@ async function connectWallet() {
   const btn = document.getElementById('wallet-btn');
 
   if (connectedAddress) {
-    // Already connected — disconnect
     connectedAddress = null;
     btn.textContent = 'Connect Wallet';
     btn.classList.remove('connected');
+    btn.onmouseenter = null;
+    btn.onmouseleave = null;
     return;
   }
 
@@ -1471,11 +1477,14 @@ async function buyAndReveal(tokenId, btnElement) {
   // Map SSE events to step states
   const stepMap = {
     'Minting NFT': 'mint',
+    'minted on Privacy': 'mint',
     'Connecting to Rayls': 'mint',
     'Retrying': 'mint',
     'Bridging NFT': 'bridge',
     'NFT bridged': 'bridge',
+    'bridged to Public': 'bridge',
     'Waiting for Rayls relayer': 'relayer',
+    'relayer to process': 'relayer',
     'Approving NFT': 'list',
     'NFT owner': 'list',
     'Marketplace approved': 'list',
