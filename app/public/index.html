@@ -1132,6 +1132,22 @@
 
 </main>
 
+<!-- ===== PURCHASE PROGRESS MODAL ===== -->
+<div class="modal-backdrop" id="progress-modal">
+  <div class="modal-panel" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="progress-title">Purchasing Cacao Lot</div>
+        <div class="modal-subtitle" style="color:#d4a24e;">On-chain transaction in progress</div>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div id="progress-steps"></div>
+      <div id="progress-log" style="margin-top:16px;background:#080808;border:1px solid #1a1410;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.9;max-height:160px;overflow-y:auto;display:none;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== REVEAL MODAL ===== -->
 <div class="modal-backdrop" id="reveal-modal">
   <div class="modal-panel">
@@ -1369,43 +1385,107 @@ async function buyAndReveal(tokenId, btnElement) {
   }
 
   const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
-  if (btn) {
-    btn.disabled = true;
-    btn.style.opacity = '1';
-    btn.style.background = '#d4a24e';
-    btn.style.color = '#000';
-    btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px;"></span>Processing on-chain...';
-  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; btn.style.opacity = '0.5'; }
 
-  // Add spinner animation if not exists
+  // Add spinner CSS
   if (!document.getElementById('spinner-style')) {
-    const style = document.createElement('style');
-    style.id = 'spinner-style';
-    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-    document.head.appendChild(style);
+    const s = document.createElement('style');
+    s.id = 'spinner-style';
+    s.textContent = '@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:0.4}}';
+    document.head.appendChild(s);
   }
 
-  // Create log panel immediately so user sees activity
-  const card = btn ? btn.closest('.lot-card') : null;
-  let logPanel = document.getElementById(`log-${tokenId}`);
-  if (logPanel) logPanel.innerHTML = '';
-  if (!logPanel && card) {
-    logPanel = document.createElement('div');
-    logPanel.id = `log-${tokenId}`;
-    logPanel.style.cssText = 'margin-top:8px;background:#0a0a0a;border:1px solid #2a2118;border-radius:8px;padding:10px;font-family:"JetBrains Mono",monospace;font-size:10px;line-height:1.8;max-height:200px;overflow-y:auto;';
-    card.appendChild(logPanel);
+  // Show progress modal
+  const STEPS = [
+    { id: 'mint', label: 'Minting NFT on Privacy Node', sub: 'Chain 800000 · Gasless' },
+    { id: 'bridge', label: 'Bridging NFT to Public Chain', sub: 'Chain 7295799 · Rayls Relayer' },
+    { id: 'relayer', label: 'Waiting for Rayls Relayer', sub: '~15 seconds for cross-chain confirmation' },
+    { id: 'list', label: 'Listing on Marketplace.sol', sub: 'Approve + List on Public Chain' },
+    { id: 'sign', label: 'Sign Purchase in MetaMask', sub: 'Confirm buy() transaction' },
+    { id: 'reveal', label: 'Revealing Private Data', sub: 'GPS, prices, farm identity unlocked' },
+  ];
+
+  const stepsEl = document.getElementById('progress-steps');
+  const logEl = document.getElementById('progress-log');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+  document.getElementById('progress-title').textContent = 'Purchasing Cacao Lot #' + tokenId;
+
+  stepsEl.innerHTML = STEPS.map((s, i) => `
+    <div id="step-${s.id}" style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #1a1410;">
+      <div id="icon-${s.id}" style="width:28px;height:28px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:#555;margin-top:2px;">
+        ${i + 1}
+      </div>
+      <div style="flex:1;">
+        <div id="label-${s.id}" style="color:#666;font-size:13px;font-weight:500;">${s.label}</div>
+        <div style="color:#444;font-size:10px;">${s.sub}</div>
+        <div id="detail-${s.id}" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5cb87a;margin-top:3px;display:none;"></div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('progress-modal').classList.add('show');
+
+  function setStep(id, status, detail, link) {
+    const icon = document.getElementById('icon-' + id);
+    const label = document.getElementById('label-' + id);
+    const det = document.getElementById('detail-' + id);
+    if (status === 'active') {
+      icon.style.border = '2px solid #d4a24e';
+      icon.style.color = '#d4a24e';
+      icon.innerHTML = '<span style="display:block;width:10px;height:10px;border:2px solid #d4a24e;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;"></span>';
+      label.style.color = '#f0e6d8';
+    } else if (status === 'done') {
+      icon.style.border = '2px solid #5cb87a';
+      icon.style.background = '#1a2e1a';
+      icon.style.color = '#5cb87a';
+      icon.innerHTML = '✓';
+      label.style.color = '#5cb87a';
+      if (detail) { det.style.display = 'block'; det.innerHTML = detail + (link ? ` <a href="${link}" target="_blank" style="color:#60a5fa;text-decoration:none;">View TX ↗</a>` : ''); }
+    } else if (status === 'error') {
+      icon.style.border = '2px solid #ef4444';
+      icon.style.color = '#ef4444';
+      icon.innerHTML = '✕';
+      label.style.color = '#ef4444';
+      if (detail) { det.style.display = 'block'; det.style.color = '#ef4444'; det.textContent = detail; }
+    } else if (status === 'waiting') {
+      icon.style.border = '2px solid #60a5fa';
+      icon.style.color = '#60a5fa';
+      icon.innerHTML = '<span style="display:block;width:8px;height:8px;background:#60a5fa;border-radius:50%;animation:pulse-glow 1.5s ease-in-out infinite;"></span>';
+      label.style.color = '#60a5fa';
+    }
   }
 
-  const addLog = (type, msg, link) => {
-    if (!logPanel) return;
+  function addLogLine(msg) {
     const t = new Date().toLocaleTimeString();
-    const icons = { log:'⏳', success:'✅', warn:'⚠️', error:'❌', sign:'🔑' };
-    const colors = { log:'#a89880', success:'#5cb87a', warn:'#f59e0b', error:'#ef4444', sign:'#60a5fa' };
-    const lnk = link ? ` <a href="${link}" target="_blank" style="color:#60a5fa;text-decoration:none;">View TX ↗</a>` : '';
-    logPanel.innerHTML += `<div style="color:${colors[type]||'#a89880'}">[${t}] ${icons[type]||'•'} ${msg}${lnk}</div>`;
-    logPanel.scrollTop = logPanel.scrollHeight;
+    logEl.innerHTML += `<div style="color:#666;">[${t}] ${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // Map SSE events to step states
+  const stepMap = {
+    'Minting NFT': 'mint',
+    'Connecting to Rayls': 'mint',
+    'Retrying': 'mint',
+    'Bridging NFT': 'bridge',
+    'NFT bridged': 'bridge',
+    'Waiting for Rayls relayer': 'relayer',
+    'Approving NFT': 'list',
+    'NFT owner': 'list',
+    'Marketplace approved': 'list',
+    'Listing on Marketplace': 'list',
+    'Listed on Marketplace': 'list',
+    'Ready for purchase': 'sign',
   };
 
+  function guessStep(msg) {
+    for (const [key, step] of Object.entries(stepMap)) {
+      if (msg.includes(key)) return step;
+    }
+    return null;
+  }
+
+  let currentStep = null;
   let result = null;
 
   try {
@@ -1416,64 +1496,67 @@ async function buyAndReveal(tokenId, btnElement) {
         const d = JSON.parse(event.data);
 
         if (d.type === 'log') {
-          addLog('log', d.message);
+          addLogLine(d.message);
+          const step = guessStep(d.message);
+          if (step && step !== currentStep) {
+            if (currentStep) setStep(currentStep, 'done');
+            currentStep = step;
+            setStep(step, 'active');
+          }
 
         } else if (d.type === 'success') {
-          addLog('success', d.message, d.explorer);
+          addLogLine('✅ ' + d.message);
+          const step = guessStep(d.message);
+          if (step) { setStep(step, 'done', d.txHash ? `TX: ${d.txHash.slice(0,16)}...` : null, d.explorer); currentStep = step; }
 
         } else if (d.type === 'warn') {
-          addLog('warn', d.message);
+          addLogLine('⚠️ ' + d.message);
 
         } else if (d.type === 'error') {
           evtSource.close();
+          if (currentStep) setStep(currentStep, 'error', d.message);
           reject(new Error(d.message));
 
         } else if (d.type === 'sign') {
-          // NFT listed on Marketplace — buyer signs buy() via MetaMask
           evtSource.close();
-          addLog('sign', 'Please sign the purchase transaction in MetaMask');
-          if (btn) btn.textContent = 'Sign in MetaMask...';
+          setStep('list', 'done', `Listing #${d.listingId}`);
+          setStep('sign', 'waiting');
+          addLogLine('🔑 Please sign in MetaMask...');
 
           try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
             const mkt = new ethers.Contract(d.marketplaceAddress, ['function buy(uint256) payable'], signer);
 
-            addLog('log', `Calling Marketplace.buy(${d.listingId}) — 0.001 USDR`);
+            setStep('sign', 'active');
             const tx = await mkt.buy(d.listingId, { value: d.price, gasLimit: 200000 });
 
-            addLog('log', `TX sent: ${tx.hash.slice(0,16)}... confirming...`);
-            if (btn) btn.textContent = 'Confirming on-chain...';
+            addLogLine('TX sent: ' + tx.hash.slice(0, 20) + '...');
             const receipt = await tx.wait();
-
             const buyExplorer = `https://testnet-explorer.rayls.com/tx/${receipt.hash}`;
-            addLog('success', 'Purchase confirmed on Public Chain!', buyExplorer);
-            addLog('success', `NFT #${d.nftTokenId} is now in your wallet`);
+            setStep('sign', 'done', `TX: ${receipt.hash.slice(0,16)}...`, buyExplorer);
 
-            // Tell backend to reveal private data
+            // Reveal
+            setStep('reveal', 'active');
             const conf = await fetch(`${API}/api/cacao-market/lot/${tokenId}/confirm-purchase`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ buyerAddress: connectedAddress, txHash: receipt.hash }),
             });
             const confData = await conf.json();
-
-            addLog('success', 'Private provenance data REVEALED');
+            setStep('reveal', 'done', 'All private data revealed');
+            addLogLine('✅ Purchase complete!');
             resolve({ ...confData, nftTokenId: d.nftTokenId, buyTxHash: receipt.hash, buyExplorer });
 
           } catch (signErr) {
-            if (signErr.code === 4001 || signErr.code === 'ACTION_REJECTED') {
-              addLog('error', 'Transaction cancelled by user');
-            } else {
-              addLog('error', `Error: ${signErr.message?.slice(0, 60)}`);
-            }
+            setStep('sign', 'error', signErr.code === 4001 ? 'Rejected by user' : signErr.message?.slice(0, 40));
             reject(signErr);
           }
 
         } else if (d.type === 'complete') {
-          // Fallback: no marketplace — server revealed directly
           evtSource.close();
-          addLog('success', `Purchase complete — NFT #${d.nftTokenId}`);
+          setStep('reveal', 'done', 'All private data revealed');
+          addLogLine('✅ Purchase complete!');
           resolve(d);
         }
       };
@@ -1481,15 +1564,17 @@ async function buyAndReveal(tokenId, btnElement) {
       evtSource.onerror = () => { evtSource.close(); reject(new Error('Connection lost')); };
     });
 
-    // Success
-    if (btn) { btn.textContent = 'NFT Purchased!'; btn.style.background = '#5cb87a'; btn.style.color = '#000'; }
+    // Success — close progress modal, open reveal modal
+    if (btn) { btn.textContent = 'NFT Purchased!'; btn.style.background = '#5cb87a'; btn.style.color = '#000'; btn.style.opacity = '1'; }
     setTimeout(() => {
+      document.getElementById('progress-modal').classList.remove('show');
       showRevealModal(result.fullMetadata || result, result);
       loadLots();
-    }, 1000);
+    }, 1500);
 
   } catch (e) {
     console.error('[purchase]', e);
+    setTimeout(() => { document.getElementById('progress-modal').classList.remove('show'); }, 3000);
     if (btn) { btn.textContent = 'Purchase Harvest Lot'; btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
