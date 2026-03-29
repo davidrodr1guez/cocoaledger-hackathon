@@ -1,194 +1,261 @@
-# CocoaLedger
+# 🏪 Cocoa Ledger — Marketplace
 
-**Blockchain-verified cacao traceability — from farm to buyer.**
+**The buyer-facing marketplace for verified cacao lots — purchase NFTs, reveal private provenance data.**
 
-Built on [Rayls](https://www.rayls.com/) Privacy Node for the Rayls Hackathon #2 at EthCC Cannes 2026.
+> Part of the [Cocoa Ledger](https://github.com/JulioMCruz/Cocoa-Ledger) ecosystem. This repo handles App 3: the NFT Marketplace where verified cacao lots are listed, purchased, and private data is revealed to buyers.
 
-## The Problem
+---
 
-The cacao industry faces a critical transparency gap. Buyers want verified provenance. Producers need to protect their commercial data. Today, achieving both is impossible:
+## 🏆 Built for EthCC 26 — Rayls Hackathon #2
 
-- **Public blockchains** expose everything — GPS coordinates, prices, supplier identity
-- **Traditional databases** are centrally controlled and can be falsified
-- **Paper certifications** are slow, expensive, and forgeable
+**Challenge:** Confidential NFT Reveal
 
-Producers lose because they can't prove quality without exposing trade secrets. Buyers lose because they can't verify origin without trusting intermediaries.
+**Main Repo:** [github.com/JulioMCruz/Cocoa-Ledger](https://github.com/JulioMCruz/Cocoa-Ledger)
 
-## The Solution
+---
 
-CocoaLedger stores farm IoT sensor data on a **Rayls Privacy Node** — an immutable, private blockchain only the producer can see. An AI agent analyzes the data, produces a quality score, and publishes **only the verdict** on the public chain. Private data (GPS, prices, supplier identity) is revealed **only after purchase**.
+## 🔗 How It Fits in the Ecosystem
 
 ```
-Farm IoT Sensors → Privacy Node (immutable, private)
-                        ↓
-                  AI Agent analyzes
-                        ↓
-              Public Attestation (score only)
-                        ↓
-              Marketplace (buyer sees score, not data)
-                        ↓
-                    Purchase
-                        ↓
-              NFT minted + bridged
-                        ↓
-              Private data REVEALED to buyer only
+App 1 — Farmer Dashboard          App 2 — Cocoa Agent          App 3 — This Repo
+(JulioMCruz/Cocoa-Ledger)        (JulioMCruz/Cocoa-Ledger)    (cocoaledger-hackathon)
+┌─────────────────────┐          ┌──────────────────┐          ┌──────────────────────┐
+│ 🌡️ IoT sensor data   │          │ 🤖 AI analysis     │          │ 🏪 NFT Marketplace     │
+│ stored on Privacy   │──────▶│ reads on-chain    │──────▶│ lists verified lots  │
+│ Node (gasless)      │          │ scores quality    │  POST  │ buyer connects wallet│
+│                     │          │ fetches prices    │  /api/ │ signs buy() on-chain │
+│ Wallet: RainbowKit  │          │ Gemini 2.5 AI     │  cacao │ NFT minted + bridged │
+│ 10-1000 readings    │          │ Price Oracle      │ market │ private data revealed│
+└─────────────────────┘          └──────────────────┘  /lot   └──────────────────────┘
 ```
 
-## Why Blockchain and Not a Database?
+---
 
-A database is controlled by one entity that can modify, delete, or fabricate data. A blockchain provides:
+## 💡 What This Marketplace Does
 
-- **Immutability** — IoT readings recorded on-chain cannot be altered retroactively
-- **Verifiable timestamps** — every reading has a provable timestamp; you can't fake 6 months of sensor data
-- **Cross-validation** — the AI compares declared conditions against immutable IoT records; if a producer claims "6-day fermentation" but timestamps show 2 days, the AI flags it
-- **Auditability** — any auditor can verify the chain of events without seeing the raw data
+1. **Receives** AI-analyzed cacao lots from the Cocoa Agent
+2. **Displays** public quality data (grade, score, premium recommendation)
+3. **Hides** private data (GPS, farm identity, purchase prices, IoT details)
+4. **Enables purchase** — buyer connects MetaMask, signs `buy()` on Marketplace.sol
+5. **Mints NFT** on Privacy Node, bridges to Public Chain
+6. **Reveals** full provenance data only to the buyer
 
-## Architecture
+### Before Purchase vs After Purchase
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    PRIVACY NODE                         │
-│                  (only producer sees)                   │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ CocoaLedger  │  │  HackathonNFT │  │   IoT Data   │  │
-│  │   Data.sol   │  │    (ERC721)   │  │  (readings)  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-│         │                  │                │           │
-│         └──────────────────┼────────────────┘           │
-│                            │                            │
-│                     AI Agent reads                      │
-│                     analyzes, scores                    │
-└────────────────────────────┼────────────────────────────┘
-                             │ bridge
-┌────────────────────────────┼────────────────────────────┐
-│                    PUBLIC CHAIN                          │
-│                  (everyone sees)                        │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ Attestation  │  │  Marketplace  │  │  NFT Mirror   │  │
-│  │    .sol      │  │     .sol      │  │  (ERC721)    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Contracts
-
-| Contract | Chain | Address | Purpose |
-|----------|-------|---------|---------|
-| `CocoaLedgerData.sol` | Privacy Node | `0x2EC69beE2eb52cDe0716E3a437384d1991Cb8b09` | Full lifecycle tracking: IoT readings, harvest, post-harvest, logistics, AI validation, sale, reveal |
-| `HackathonNFT.sol` | Privacy Node | `0x22ABC2FBDc6eE41e6b4a1773f3fb12d4a85eD06C` | Cacao lot NFTs — minted on purchase, bridged to public chain |
-| `Attestation.sol` | Public Chain | `0x0Ee606d003e5E519CCcEA3e37c748B11d0cFE61e` | AI quality attestations — score, grade, reasoning on-chain |
-| `Marketplace.sol` | Public Chain | `0x192646c88C7d63d5d33C2cAf6608E9cDcA0782f4` | Escrow marketplace for buying verified cacao lots |
-
-## AI Scoring Methodology
-
-The AI agent scores each lot using a **5-factor weighted model**:
-
-| Factor | Weight | What It Evaluates |
-|--------|--------|-------------------|
-| Flavor/Sensory | 30% | Consistency of sensory profile with declared variety and region |
-| Processing Quality | 25% | Fermentation days, drying method, final humidity |
-| IoT Data Quality | 20% | Environmental data consistency, number of readings, anomaly detection |
-| Farm Credentials | 15% | Farmer experience, certifications, altitude |
-| Disease Risk | 10% | Monilia, escoba de bruja risk based on environmental conditions |
-
-### Grades
-
-| Grade | Score | Classification | Price Premium |
-|-------|-------|---------------|---------------|
-| S | 95-100 | Exceptional | Top 1% |
-| A | 85-94 | Premium Fine Flavor | 50-80% |
-| B | 70-84 | Fine Flavor | 25-50% |
-| C | 50-69 | Standard | 0-25% |
-| D | 0-49 | Below Standard | Rejected |
-
-## Lot Lifecycle
-
-Each cacao lot passes through 11 on-chain states, generating a verifiable audit trail:
-
-```
-Created → Growing (IoT) → Finalized → AI Validated → Harvested →
-Post-Harvest → In Transit → Stored → Tokenized → Listed → Sold → Revealed
-```
-
-Every state transition is recorded as an on-chain event with a timestamp.
-
-## Public vs Private Data
-
-| Public (visible before purchase) | Private (revealed after purchase) |
-|----------------------------------|-----------------------------------|
-| Cacao variety | Farm GPS coordinates |
-| AI quality score + grade | Exact region and municipality |
+| Public (visible to everyone) | Private (revealed after purchase) |
+|------------------------------|-----------------------------------|
+| Quality Grade (S/A/B/C/D) | Farm GPS coordinates |
+| Quality Score (0-100) | Exact region and municipality |
 | Score breakdown (5 factors) | Cooperative / farm name |
 | Premium recommendation | Purchase price per kg |
 | Average temperature, humidity | Production costs |
-| Crop health assessment | Detailed flavor profile |
-| Number of IoT readings | Full IoT sensor data |
-| Certifications (count) | Lab quality analysis |
+| Crop health assessment | Detailed IoT sensor data |
+| Number of IoT readings | Lab quality analysis |
+| Market valuation | Per-device statistics |
+| | Anomaly detection report |
+| | Producer recommendations |
 
-## API Endpoints
+---
 
-All endpoints under `/api/cacao-market/`:
+## 🔄 Purchase Flow — Step by Step
+
+```mermaid
+sequenceDiagram
+    actor Buyer
+    participant UI as Marketplace UI
+    participant API as Marketplace API
+    participant PN as Privacy Node
+    participant PC as Public Chain
+    participant MM as MetaMask
+
+    Buyer->>UI: Connect wallet
+    UI->>MM: eth_requestAccounts
+    MM-->>UI: 0xBuyer...
+
+    Buyer->>UI: Click "Purchase Harvest Lot"
+    UI->>API: POST /prepare (lotId)
+
+    Note over API,PN: Step 1: Mint NFT
+    API->>PN: mint(tokenId) — gasless
+    PN-->>API: ✅ Minted
+
+    Note over API,PC: Step 2: Bridge
+    API->>PN: teleportToPublicChain()
+    PN-->>PC: Relayer mints on public chain
+
+    Note over API,PC: Step 3: List
+    API->>PC: approve() + list() on Marketplace.sol
+    PC-->>API: ✅ Listed (listingId)
+
+    API-->>UI: Ready — listingId + price
+
+    Note over UI,MM: Step 4: Buyer signs
+    UI->>MM: buy(listingId) — send USDR
+    MM-->>Buyer: Confirm transaction?
+    Buyer->>MM: ✅ Confirm
+    MM->>PC: Execute buy()
+    PC-->>UI: ✅ NFT transferred to buyer
+
+    Note over UI,API: Step 5: Reveal
+    UI->>API: POST /confirm-purchase
+    API-->>UI: Full private data
+
+    UI-->>Buyer: 🔓 GPS, prices, farm identity, IoT data revealed
+```
+
+---
+
+## 📊 AI Quality Scoring
+
+Scores are produced by the [Cocoa Agent](https://github.com/JulioMCruz/Cocoa-Ledger/tree/main/agent) using a **5-factor weighted model**:
+
+| Factor | Weight | What It Evaluates |
+|--------|--------|-------------------|
+| Flavor/Sensory Potential | 30% | Environmental conditions for fine flavor development |
+| Processing Readiness | 25% | Soil moisture, light, rainfall patterns |
+| IoT Data Quality | 20% | Reading count, sensor consistency, anomaly rate |
+| Farm Environment | 15% | Temperature stability, humidity range, pH |
+| Disease Risk | 10% | Monilia, escoba de bruja risk indicators |
+
+### Grades
+
+| Grade | Score | Price Premium |
+|-------|-------|---------------|
+| 🏆 S | 95-100 | +35% |
+| 🥇 A | 85-94 | +20% |
+| 🥈 B | 70-84 | +5% |
+| 🥉 C | 50-69 | -10% |
+| ⚠️ D | 0-49 | -30% (Rejected) |
+
+---
+
+## 🔧 API Endpoints
+
+All under `/api/cacao-market/`:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/cacao-market/lot` | Register a new lot (from web form or agent analysis) |
-| `GET` | `/api/cacao-market/lots` | List all lots with public data + AI scores |
-| `GET` | `/api/cacao-market/lot/:id` | Get lot info (respects privacy — hides private fields until purchased) |
-| `POST` | `/api/cacao-market/lot/:id/purchase` | Purchase lot: mints NFT + bridges to public chain + reveals private data |
-| `POST` | `/api/cacao-market/lot/:id/reveal` | Reveal private data (without NFT mint) |
-| `POST` | `/api/cacao-market/lot/:id/bridge` | Bridge NFT to public chain |
-| `GET` | `/api/cacao-market/attestations` | Get AI attestations from public chain |
-| `GET` | `/api/cacao-market/listings` | Get active marketplace listings |
+| `POST` | `/lot` | Register lot (from Agent or web form) |
+| `GET` | `/lots` | List all lots with public AI scores |
+| `GET` | `/lot/:id` | Get lot (private fields hidden until purchased) |
+| `POST` | `/lot/:id/prepare` | Server: mint NFT → bridge → list on Marketplace.sol |
+| `POST` | `/lot/:id/confirm-purchase` | After MetaMask buy(): reveal private data |
+| `POST` | `/lot/:id/purchase` | Quick purchase (no wallet, for testing) |
+| `POST` | `/lot/:id/reveal` | Reveal private data |
+| `GET` | `/attestations` | Read attestations from public chain |
+| `GET` | `/listings` | Active marketplace listings |
 
 ### Agent Integration
 
-The AI agent can POST its analysis result directly to the marketplace:
+The Cocoa Agent sends analysis results directly to the marketplace:
 
 ```bash
-# Agent analyzes a lot, then sends result to marketplace
-curl -X POST http://localhost:3000/api/cacao-market/lot \
+curl -X POST http://<marketplace>/api/cacao-market/lot \
   -H "Content-Type: application/json" \
   -d '{
-    "lotId": 42,
-    "farmName": "Finca La Esperanza",
-    "origin": "Tumaco, Nariño",
+    "lotId": 11,
+    "farmName": "Finca El Llano",
+    "origin": "Arauca, Colombia",
     "publicMetadata": {
       "qualityGrade": "A",
       "qualityScore": 89,
-      "scoreBreakdown": { ... },
+      "scoreBreakdown": { "flavorScore": 92, ... },
+      "premiumRecommendation": "20%",
+      "originVerified": true,
       ...
     },
     "privateMetadata": {
-      "gpsAreaCoverage": "1.78N, 78.89W",
-      "priceEstimatePerKg": 4.80,
-      "iotDataHash": "0x...",
+      "gpsAreaCoverage": "7.08N, 70.76W",
+      "priceEstimatePerKg": 5.80,
+      "iotDataHash": "0x1fbc52dcb37ec...",
       ...
     }
   }'
 ```
 
-## Quick Start
+---
+
+## 📝 Smart Contracts
+
+| Contract | Chain | Address | Purpose |
+|----------|-------|---------|---------|
+| `CocoaLedgerData.sol` | Privacy (800000) | `0x2EC6...Cb8b09` | Full lifecycle: IoT → Harvest → PostHarvest → Logistics → Sale → Reveal |
+| `HackathonNFT.sol` | Privacy (800000) | `0x22AB...D06C` | Cacao lot NFTs (ERC721) |
+| `Attestation.sol` | Public (7295799) | `0x0Ee6...E61e` | AI quality attestation registry |
+| `Marketplace.sol` | Public (7295799) | `0x1926...82f4` | Escrow marketplace — buy with USDR |
+
+### CocoaLedgerData.sol — Lifecycle States
+
+```
+Created → Growing (IoT) → Finalized → AI Validated → Harvested →
+PostHarvest → InTransit → Stored → Tokenized → Listed → Sold → Revealed
+```
+
+Each state transition generates an on-chain event with immutable timestamp.
+
+---
+
+## 📁 Project Structure
+
+```
+cocoaledger-hackathon/
+├── src/                              ← Smart Contracts
+│   ├── CocoaLedger.sol               ← Full lifecycle tracking (Privacy Node)
+│   ├── HackathonNFT.sol              ← Bridgeable ERC721 cacao lot NFTs
+│   ├── Attestation.sol               ← AI attestation registry (Public Chain)
+│   └── Marketplace.sol               ← Escrow marketplace (Public Chain)
+│
+├── script/                           ← Foundry deploy scripts
+│   ├── DeployCocoaLedger.s.sol       ← Deploy lifecycle contract
+│   ├── RegisterLot.s.sol             ← Register lot + sample IoT data
+│   ├── DeployNFT.s.sol               ← Deploy NFT contract
+│   ├── DeployPublic.s.sol            ← Deploy Attestation on public chain
+│   └── DeployMarketplace.s.sol       ← Deploy Marketplace on public chain
+│
+├── agent/                            ← AI verification agent (scoring prompts)
+│   ├── src/cacaoVerifier.ts          ← 5-factor scoring methodology
+│   ├── src/llm.ts                    ← Multi-provider LLM (Gemini/OpenRouter)
+│   └── src/index.ts                  ← Agent entry point
+│
+├── app/                              ← Marketplace web app
+│   ├── server.js                     ← Express API (endpoints + on-chain ops)
+│   └── public/index.html             ← Marketplace UI (wallet connect + purchase)
+│
+└── demo.sh                           ← Terminal demo script
+```
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`, `cast`)
 - [Node.js](https://nodejs.org/) 18+
-- Rayls Privacy Node credentials (from hackathon organizers)
+- MetaMask with Rayls Testnet
 
 ### Setup
 
 ```bash
 git clone https://github.com/davidrodr1guez/cocoaledger-hackathon.git
 cd cocoaledger-hackathon
-forge install
-npm install
-cp .env.example .env  # Fill with your credentials
+forge install && npm install
+cp .env.example .env  # Fill with credentials
 source .env
 ```
 
-### Run the Marketplace
+### Deploy Contracts
+
+```bash
+# Privacy Node (gasless)
+forge script script/DeployCocoaLedger.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
+forge script script/DeployNFT.s.sol --rpc-url $PRIVACY_NODE_RPC_URL --broadcast --legacy
+
+# Public Chain (needs USDR)
+DEPLOYER_PRIVATE_KEY=$PUBLIC_CHAIN_PRIVATE_KEY forge script script/DeployPublic.s.sol --rpc-url $PUBLIC_CHAIN_RPC_URL --broadcast --legacy
+DEPLOYER_PRIVATE_KEY=$PUBLIC_CHAIN_PRIVATE_KEY forge script script/DeployMarketplace.s.sol --rpc-url $PUBLIC_CHAIN_RPC_URL --broadcast --legacy
+```
+
+### Run Marketplace
 
 ```bash
 cd app && npm install
@@ -196,62 +263,38 @@ DEMO_MODE=true node server.js
 # Open http://localhost:3000
 ```
 
-### Run the Demo Script
+### MetaMask Setup
 
-```bash
-./demo.sh
-```
+| Field | Value |
+|-------|-------|
+| Network | Rayls Testnet |
+| RPC URL | `https://testnet-rpc.rayls.com/` |
+| Chain ID | `7295799` |
+| Currency | USDR |
+| Explorer | `https://testnet-explorer.rayls.com/` |
 
-### Run the AI Agent
+---
 
-```bash
-cd agent && npm install
-cp .env.example .env  # Add OPENROUTER_API_KEY or GEMINI_API_KEY
-npm start
-```
+## 🔍 Blockchain Explorers
 
-## Project Structure
+| Chain | Explorer | What to See |
+|-------|----------|-------------|
+| Privacy Node | [blockscout-privacy-node-0.rayls.com](https://blockscout-privacy-node-0.rayls.com) | IoT data storage, NFT mints, lot lifecycle |
+| Public Chain | [testnet-explorer.rayls.com](https://testnet-explorer.rayls.com) | Attestations, marketplace listings, NFT transfers |
 
-```
-cocoaledger-hackathon/
-├── src/                          # Smart contracts
-│   ├── CocoaLedger.sol           # Full lifecycle tracking (Privacy Node)
-│   ├── HackathonNFT.sol          # Cacao lot NFTs (ERC721)
-│   ├── Attestation.sol           # AI attestation registry (Public Chain)
-│   └── Marketplace.sol           # Escrow marketplace (Public Chain)
-│
-├── script/                       # Foundry deploy/interaction scripts
-│   ├── DeployCocoaLedger.s.sol
-│   ├── RegisterLot.s.sol         # Register lot + IoT data
-│   ├── DeployNFT.s.sol
-│   ├── DeployPublic.s.sol        # Deploy Attestation on public chain
-│   └── DeployMarketplace.s.sol
-│
-├── agent/                        # AI verification agent
-│   ├── src/cacaoVerifier.ts      # Scoring methodology + prompts
-│   ├── src/llm.ts                # Multi-provider LLM calls
-│   ├── src/config.ts
-│   └── src/index.ts
-│
-├── app/                          # Marketplace web app
-│   ├── server.js                 # Express API + marketplace logic
-│   └── public/index.html         # Marketplace UI
-│
-└── demo.sh                       # Full pipeline demo script
-```
+---
 
-## Blockchain Explorers
+## 🛠️ Tech Stack
 
-- **Privacy Node**: https://blockscout-privacy-node-0.rayls.com
-- **Public Chain**: https://testnet-explorer.rayls.com
+| Component | Technology |
+|-----------|-----------|
+| Smart Contracts | Solidity 0.8.24, Foundry, Rayls Protocol SDK |
+| Marketplace API | Node.js, Express, ethers.js |
+| Frontend | HTML/CSS/JS, ethers.js CDN (MetaMask integration) |
+| AI Scoring | 5-factor weighted model (prompts for Gemini/OpenRouter) |
+| Privacy Chain | Rayls Privacy Node (gasless, EVM, Chain 800000) |
+| Public Chain | Rayls Public Chain (reth, sub-second finality, Chain 7295799) |
 
-## Tech Stack
+---
 
-- **Contracts**: Solidity 0.8.24, Foundry, Rayls Protocol SDK
-- **Agent**: TypeScript, ethers.js, Google Gemini / OpenRouter
-- **Frontend**: HTML/CSS/JS (single page), Express.js
-- **Chains**: Rayls Privacy Node (gasless, EVM) + Rayls Public Chain (reth, sub-second finality)
-
-## Team
-
-Built at Rayls Hackathon #2, EthCC Cannes, March 28-29, 2026.
+**Built with 🍫 for EthCC 26 — Rayls Hackathon #2**
