@@ -1297,8 +1297,7 @@ function renderCard(lot) {
   return `
     <div class="card lot-card">
       <div class="card-img-wrap">
-        <img class="card-img" src="${img}" alt="${lot.variety || 'Cacao'}" loading="lazy"
-          onerror="this.style.display='none'" />
+        <img class="card-img" src="${img}" alt="${lot.variety || 'Cacao'}" loading="lazy" onerror="this.style.background='linear-gradient(135deg,#2d1800,#1a0f00)';this.style.objectFit='contain';" />
         <div class="card-img-overlay"></div>
         <div class="card-status">
           <span class="status-pill status-${lot.status}">${lot.status}</span>
@@ -1460,26 +1459,40 @@ function showRevealModal(data, purchaseInfo) {
   title.textContent = `${data.variety || 'Cacao Lot'} — Full Data`;
 
   // Add NFT info at top if from purchase
+  const lotImg = LOT_IMAGES[data.tokenId] || DEFAULT_IMG;
+  const buyerAddr = purchaseInfo?.fullMetadata?.buyerAddress || connectedAddress || '';
+
   const nftBanner = purchaseInfo && purchaseInfo.nftTokenId ? `
-    <div style="margin-bottom:16px; padding:16px; background:linear-gradient(135deg,#0a1a0a,#1a2e1a); border-radius:12px; border:1px solid #2d4a2d;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-        <span style="font-size:28px;">🎨</span>
-        <div>
-          <div style="font-weight:700; color:#4ade80; font-size:16px;">NFT #${purchaseInfo.nftTokenId} Minted & Bridged</div>
-          <div style="color:#888; font-size:11px;">Cacao lot tokenized on Rayls Privacy Node and bridged to Public Chain</div>
+    <div style="margin-bottom:16px; border-radius:14px; overflow:hidden; border:2px solid #2d4a2d; background:#0a0f0a;">
+      <!-- NFT Card Visual -->
+      <div style="position:relative;">
+        <img src="${lotImg}" style="width:100%; height:140px; object-fit:cover; display:block;" onerror="this.style.background='linear-gradient(135deg,#2d1800,#1a0f00)'" />
+        <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(to bottom, transparent 30%, #0a0f0a 100%);"></div>
+        <div style="position:absolute; top:10px; left:12px; background:rgba(0,0,0,0.7); padding:3px 10px; border-radius:6px; font-size:10px; color:#4ade80; font-weight:600; border:1px solid #2d4a2d;">NFT MINTED</div>
+        <div style="position:absolute; top:10px; right:12px; background:rgba(0,0,0,0.7); padding:3px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#e8c373; font-weight:700;">#${purchaseInfo.nftTokenId}</div>
+        <div style="position:absolute; bottom:12px; left:12px;">
+          <div style="font-family:'DM Serif Display',serif; font-size:20px; color:#f0e6d8; text-shadow:0 2px 8px rgba(0,0,0,0.8);">${data.variety || 'Cacao Lot'}</div>
+          <div style="font-size:11px; color:#a89880;">${data.weight || ''} · ${data.harvest || ''}</div>
         </div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; background:#0a0a0a; padding:10px; border-radius:8px;">
-        <span style="color:#666;">NFT Token ID</span>
-        <span style="color:#4ade80; font-family:'JetBrains Mono',monospace; font-weight:600;">#${purchaseInfo.nftTokenId}</span>
-        ${purchaseInfo.mintTxHash ? `
-        <span style="color:#666;">Mint TX (Privacy Node)</span>
-        <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.mintTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:11px;">${purchaseInfo.mintTxHash.slice(0,14)}...${purchaseInfo.mintTxHash.slice(-6)} ↗</a>` : ''}
-        ${purchaseInfo.bridgeTxHash ? `
-        <span style="color:#666;">Bridge TX (→ Public Chain)</span>
-        <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.bridgeTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:11px;">${purchaseInfo.bridgeTxHash.slice(0,14)}...${purchaseInfo.bridgeTxHash.slice(-6)} ↗</a>` : ''}
-        <span style="color:#666;">Buyer</span>
-        <span style="color:#e0e0e0; font-family:'JetBrains Mono',monospace; font-size:11px;">${(purchaseInfo.fullMetadata?.buyerAddress || connectedAddress || '').slice(0,10)}...${(purchaseInfo.fullMetadata?.buyerAddress || connectedAddress || '').slice(-6)}</span>
+      <!-- NFT Details -->
+      <div style="padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="color:#4ade80; font-size:13px; font-weight:600;">Cacao Harvest NFT</span>
+          <span style="font-size:11px; padding:2px 8px; background:#1a2a1a; border-radius:4px; color:#4ade80; border:1px solid #2d4a2d;">Grade ${data.aiGrade || '?'} · ${data.aiScore || '?'}/100</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px; background:#080808; padding:10px; border-radius:8px;">
+          <span style="color:#555;">Owner</span>
+          <span style="color:#e0e0e0; font-family:'JetBrains Mono',monospace; font-size:10px;">${buyerAddr.slice(0,8)}...${buyerAddr.slice(-6)}</span>
+          ${purchaseInfo.mintTxHash ? `
+          <span style="color:#555;">Mint TX</span>
+          <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.mintTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:10px;">${purchaseInfo.mintTxHash.slice(0,10)}...${purchaseInfo.mintTxHash.slice(-4)} ↗</a>` : ''}
+          ${purchaseInfo.bridgeTxHash ? `
+          <span style="color:#555;">Bridge TX</span>
+          <a href="https://blockscout-privacy-node-0.rayls.com/tx/${purchaseInfo.bridgeTxHash}" target="_blank" style="color:#60a5fa; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:10px;">${purchaseInfo.bridgeTxHash.slice(0,10)}...${purchaseInfo.bridgeTxHash.slice(-4)} ↗</a>` : ''}
+          <span style="color:#555;">Chain</span>
+          <span style="color:#a89880; font-size:10px;">Rayls Privacy Node → Public Chain</span>
+        </div>
       </div>
     </div>` : '';
 
