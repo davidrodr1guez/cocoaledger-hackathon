@@ -61,10 +61,12 @@ const ATTESTATION_ABI = [
 
 // ─── In-memory metadata store (Privacy Node simulation) ────────────────
 const lotMetadata = {};
-let nextTokenId = 10; // Start from 10 to avoid collision with test mints
+let nextTokenId = 10;
 
-// ─── Demo data for slides/presentation ─────────────────────────────────
-if (process.env.DEMO_MODE === 'true') {
+function loadDemoData() {
+  // Clear all lots
+  Object.keys(lotMetadata).forEach(k => delete lotMetadata[k]);
+  nextTokenId = 10;
   const demoLots = [
     {
       tokenId: 1,
@@ -205,7 +207,19 @@ if (process.env.DEMO_MODE === 'true') {
   console.log("  DEMO MODE: 4 sample lots loaded");
 }
 
+// Load demo data on startup
+if (process.env.DEMO_MODE === 'true') {
+  loadDemoData();
+}
+
 // ─── API Routes ────────────────────────────────────────────────────────
+
+// Reset demo data
+app.post('/api/reset', (req, res) => {
+  loadDemoData();
+  console.log('🔄 Demo data reset');
+  res.json({ success: true, message: 'Demo reset — 4 lots restored' });
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -964,6 +964,7 @@
       <span class="chain-dot"></span>
       On-Chain
     </div>
+    <button class="wallet-btn" style="background:#1a1410;color:#a89880;border:1px solid #2a2118;" onclick="resetDemo()">Reset Demo</button>
     <button id="wallet-btn" class="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
   </div>
 </header>
@@ -1171,6 +1172,11 @@ const API = '';
 let connectedAddress = null;
 
 // ===== WALLET CONNECT =====
+async function resetDemo() {
+  await fetch(`${API}/api/reset`, { method: 'POST' });
+  loadLots();
+}
+
 async function connectWallet() {
   const btn = document.getElementById('wallet-btn');
 
