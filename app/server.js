@@ -470,10 +470,10 @@ app.post('/api/cacao-market/lot/:tokenId/confirm-purchase', (req, res) => {
 });
 
 // GET /api/cacao-market/lot/:tokenId/purchase-stream — SSE purchase with live logs
+// SSE purchase stream: mint → bridge → wait relayer → approve → list → signal MetaMask
 app.get('/api/cacao-market/lot/:tokenId/purchase-stream', async (req, res) => {
   const tokenId = parseInt(req.params.tokenId);
   const lot = lotMetadata[tokenId];
-  const buyerAddress = req.query.buyer || TRANSFER_TO;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -485,17 +485,20 @@ app.get('/api/cacao-market/lot/:tokenId/purchase-stream', async (req, res) => {
 
   if (!lot) {
     send('error', { message: 'Lot not found' });
-    res.end();
-    return;
+    return res.end();
   }
 
+  const MARKETPLACE = process.env.MARKETPLACE_ADDRESS;
   let nftTokenId = Date.now() % 100000;
-
-  // Step 1: Mint
-  send('log', { message: 'Connecting to Rayls Privacy Node...' });
-  send('log', { message: `Minting NFT #${nftTokenId} on Privacy Node...` });
-
   let mintTxHash = null;
+  let bridgeTxHash = null;
+  let listingId = null;
+  const price = '1000000000000000'; // 0.001 USDR
+
+  // Step 1: Mint NFT on Privacy Node
+  send('log', { message: 'Connecting to Rayls Privacy Node (Chain 800000)...' });
+  send('log', { message: `Minting NFT #${nftTokenId}...` });
+
   try {
     const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
     const mintTx = await nft.mint(MINT_RECIPIENT, nftTokenId);
@@ -506,59 +509,102 @@ app.get('/api/cacao-market/lot/:tokenId/purchase-stream', async (req, res) => {
       txHash: mintTxHash,
       explorer: `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}`,
     });
+    console.log(`🎨 NFT #${nftTokenId} minted — ${mintTxHash}`);
   } catch (e) {
-    nftTokenId = (Date.now() + 1) % 100000;
+    // Retry with different ID
+    nftTokenId = (Date.now() + 7) % 100000;
+    send('log', { message: `Retrying with NFT #${nftTokenId}...` });
     try {
       const nft = new ethers.Contract(NFT_ADDRESS, NFT_ABI, deployerWallet);
       const mintTx = await nft.mint(MINT_RECIPIENT, nftTokenId);
       await mintTx.wait();
       mintTxHash = mintTx.hash;
-      send('success', {
-        message: `NFT #${nftTokenId} minted on Privacy Node`,
-        txHash: mintTxHash,
-        explorer: `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}`,
-      });
+      send('success', { message: `NFT #${nftTokenId} minted on Privacy Node`, txHash: mintTxHash, explorer: `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}` });
+      console.log(`🎨 NFT #${nftTokenId} minted (retry) — ${mintTxHash}`);
     } catch (e2) {
-      send('warn', { message: `Mint retry failed: ${e2.message?.slice(0, 60)}` });
+      send('error', { message: `Mint failed: ${e2.message?.slice(0, 80)}` });
+      return res.end();
     }
   }
 
-  // Step 2: Bridge
-  send('log', { message: `Bridging NFT #${nftTokenId} to Public Chain...` });
+  // Step 2: Bridge NFT to Public Chain (to our address, NOT buyer — we need to list it)
+  send('log', { message: `Bridging NFT #${nftTokenId} to Public Chain (7295799)...` });
 
-  let bridgeTxHash = null;
   try {
     const nftReg = new ethers.Contract(NFT_ADDRESS, NFT_ABI, registeredWallet);
-    const bridgeTx = await nftReg.teleportToPublicChain(buyerAddress, nftTokenId, PUBLIC_CHAIN_ID);
+    const bridgeTx = await nftReg.teleportToPublicChain(TRANSFER_TO, nftTokenId, PUBLIC_CHAIN_ID);
     await bridgeTx.wait();
     bridgeTxHash = bridgeTx.hash;
     send('success', {
-      message: `NFT #${nftTokenId} bridged to Public Chain`,
+      message: `NFT bridged to Public Chain`,
       txHash: bridgeTxHash,
       explorer: `https://blockscout-privacy-node-0.rayls.com/tx/${bridgeTxHash}`,
     });
+    console.log(`🌉 NFT #${nftTokenId} bridged — ${bridgeTxHash}`);
   } catch (e) {
-    send('warn', { message: `Bridge: ${e.message?.slice(0, 60)}` });
+    send('error', { message: `Bridge failed: ${e.message?.slice(0, 80)}` });
+    return res.end();
   }
 
-  // Step 3: Reveal
-  lot.status = 'revealed';
-  lot.nftTokenId = nftTokenId;
-  lot.purchasedAt = new Date().toISOString();
-  lot.buyerAddress = buyerAddress;
+  // Step 3: Wait for relayer to mirror NFT on public chain
+  send('log', { message: 'Waiting for Rayls relayer to process bridge (15s)...' });
+  await new Promise(r => setTimeout(r, 15000));
 
-  send('success', { message: 'Private data REVEALED to buyer' });
-  send('complete', {
-    tokenId,
-    nftTokenId,
-    mintTxHash,
-    bridgeTxHash,
-    mintExplorer: mintTxHash ? `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}` : null,
-    bridgeExplorer: bridgeTxHash ? `https://blockscout-privacy-node-0.rayls.com/tx/${bridgeTxHash}` : null,
-    fullMetadata: lot,
-  });
+  // Step 4: Approve + List on Marketplace.sol
+  if (publicWallet && MARKETPLACE && NFT_MIRROR_ADDRESS) {
+    send('log', { message: 'Approving NFT for Marketplace.sol...' });
 
-  console.log(`🔓 Lot #${tokenId} PURCHASED & REVEALED — NFT #${nftTokenId}`);
+    try {
+      const ERC721_ABI = ['function approve(address,uint256)', 'function ownerOf(uint256) view returns (address)'];
+      const mirrorNft = new ethers.Contract(NFT_MIRROR_ADDRESS, ERC721_ABI, publicWallet);
+
+      const owner = await mirrorNft.ownerOf(nftTokenId);
+      send('log', { message: `NFT owner on public chain: ${owner.slice(0,10)}...` });
+
+      const approveTx = await mirrorNft.approve(MARKETPLACE, nftTokenId, { gasLimit: 100000, type: 0 });
+      await approveTx.wait();
+      send('success', { message: 'Marketplace approved for NFT transfer' });
+
+      send('log', { message: 'Listing on Marketplace.sol...' });
+      const MARKET_ABI = ['function list(address,uint8,uint256,uint256,uint256) returns (uint256)', 'function nextListingId() view returns (uint256)'];
+      const marketplace = new ethers.Contract(MARKETPLACE, MARKET_ABI, publicWallet);
+
+      const listTx = await marketplace.list(NFT_MIRROR_ADDRESS, 1, nftTokenId, 1, price, { gasLimit: 300000, type: 0 });
+      await listTx.wait();
+      listingId = Number(await marketplace.nextListingId()) - 1;
+      send('success', { message: `Listed on Marketplace — Listing #${listingId}` });
+      console.log(`🏪 Listed — listing #${listingId}`);
+
+    } catch (e) {
+      send('warn', { message: `Marketplace listing failed: ${e.message?.slice(0, 80)}` });
+      console.log(`⚠️ Listing failed: ${e.message?.slice(0, 100)}`);
+    }
+  }
+
+  // Step 5: Signal frontend to trigger MetaMask
+  if (listingId !== null) {
+    send('sign', {
+      message: 'Ready for purchase — please sign in MetaMask',
+      listingId,
+      price,
+      marketplaceAddress: MARKETPLACE,
+      nftTokenId,
+    });
+  } else {
+    // Fallback: no marketplace listing — just reveal
+    lot.status = 'revealed';
+    lot.nftTokenId = nftTokenId;
+    lot.purchasedAt = new Date().toISOString();
+    send('success', { message: 'Private data REVEALED to buyer' });
+    send('complete', {
+      tokenId, nftTokenId, mintTxHash, bridgeTxHash, listingId: null,
+      mintExplorer: mintTxHash ? `https://blockscout-privacy-node-0.rayls.com/tx/${mintTxHash}` : null,
+      bridgeExplorer: bridgeTxHash ? `https://blockscout-privacy-node-0.rayls.com/tx/${bridgeTxHash}` : null,
+      fullMetadata: lot,
+    });
+  }
+
+  console.log(`📦 Lot #${tokenId} prepared — NFT #${nftTokenId}, listing #${listingId}`);
   res.end();
 });
 
