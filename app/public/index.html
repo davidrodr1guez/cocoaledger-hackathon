@@ -1369,9 +1369,23 @@ async function buyAndReveal(tokenId, btnElement) {
   }
 
   const btn = btnElement || document.querySelector(`[data-buy="${tokenId}"]`);
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '1';
+    btn.style.background = '#d4a24e';
+    btn.style.color = '#000';
+    btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px;"></span>Processing on-chain...';
+  }
 
-  // Create log panel
+  // Add spinner animation if not exists
+  if (!document.getElementById('spinner-style')) {
+    const style = document.createElement('style');
+    style.id = 'spinner-style';
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+  }
+
+  // Create log panel immediately so user sees activity
   const card = btn ? btn.closest('.lot-card') : null;
   let logPanel = document.getElementById(`log-${tokenId}`);
   if (logPanel) logPanel.innerHTML = '';
@@ -1403,7 +1417,6 @@ async function buyAndReveal(tokenId, btnElement) {
 
         if (d.type === 'log') {
           addLog('log', d.message);
-          if (btn) btn.textContent = d.message.length > 28 ? d.message.slice(0, 28) + '...' : d.message;
 
         } else if (d.type === 'success') {
           addLog('success', d.message, d.explorer);
